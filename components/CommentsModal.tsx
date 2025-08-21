@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
+  Keyboard,
 } from 'react-native';
 import { X, Send } from 'lucide-react-native';
 import { Comment } from '@/types/video';
@@ -27,6 +28,8 @@ const { height: screenHeight } = Dimensions.get('window');
 export default function CommentsModal({ visible, onClose }: CommentsModalProps) {
   const [comments, setComments] = useState<Comment[]>(mockComments);
   const [newComment, setNewComment] = useState<string>('');
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState<boolean>(false);
+  const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
 
   const ENTER_DURATION = 280;
   const EXIT_DURATION = 240;
@@ -78,6 +81,30 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
     }
   };
 
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', (e: unknown) => {
+      setIsKeyboardVisible(true);
+      const evt = e as { endCoordinates?: { height?: number } } | undefined;
+      const h = evt?.endCoordinates?.height ?? 0;
+      setKeyboardHeight(typeof h === 'number' ? h : 0);
+      console.log('keyboardDidShow', h);
+    });
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+      setIsKeyboardVisible(false);
+      setKeyboardHeight(0);
+      console.log('keyboardDidHide');
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  const EMOJIS = useMemo<string[]>(() => ['😂','😭','🔥','💀','😅','🤫','😮','😆'], []);
+  const handleAddEmoji = (emoji: string) => {
+    setNewComment((prev) => `${prev}${prev ? ' ' : ''}${emoji}`);
+  };
+
   const handleAddComment = () => {
     if (newComment.trim()) {
       const comment: Comment = {
@@ -112,6 +139,9 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
         >
           <Animated.View style={{ flex: 1, transform: [{ translateY }] }} testID="comments-sheet">
             <View style={styles.header}>
+              <View style={styles.grabberContainer}>
+                <View style={styles.grabber} />
+              </View>
               <Text style={styles.headerTitle}>Comentarios</Text>
               <TouchableOpacity onPress={handleAnimatedClose} style={styles.closeButton} testID="comments-close">
                 <X color="#fff" size={24} />
@@ -137,10 +167,18 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
               ))}
             </ScrollView>
 
-            <View style={styles.inputContainer}>
+            <View style={styles.emojiBar} testID="comments-emoji-bar">
+              {EMOJIS.map((e) => (
+                <TouchableOpacity key={e} onPress={() => handleAddEmoji(e)} style={styles.emojiBtn}>
+                  <Text style={styles.emojiText}>{e}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={[styles.inputContainer, isKeyboardVisible ? { paddingBottom: Math.max(12, keyboardHeight > 0 ? 12 : 12) } : null]}>
               <TextInput
                 style={styles.textInput}
-                placeholder="Añade un comentario..."
+                placeholder="¿Qué opinas sobre esto?"
                 placeholderTextColor="#666"
                 value={newComment}
                 onChangeText={setNewComment}
@@ -167,7 +205,7 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#0a0a0a',
   },
   modalOverlay: {
     flex: 1,
@@ -176,8 +214,8 @@ const styles = StyleSheet.create({
   },
   sheet: {
     height: Math.round(screenHeight * 0.75),
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
     overflow: 'hidden',
   },
   header: {
@@ -185,23 +223,28 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingTop: 8,
+    paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    borderBottomColor: '#222',
+    backgroundColor: '#131313',
   },
   headerTitle: {
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
   },
   closeButton: {
-    padding: 4,
+    padding: 6,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
     borderRadius: 999,
   },
   commentsContainer: {
     flex: 1,
     paddingHorizontal: 16,
+    backgroundColor: '#0f0f0f',
   },
   commentItem: {
     flexDirection: 'row',
@@ -237,19 +280,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
   },
+  emojiBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#1f1f1f',
+    backgroundColor: '#0f0f0f',
+  },
+  emojiBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+  },
+  emojiText: {
+    fontSize: 22,
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: '#333',
-    backgroundColor: '#000',
+    borderTopColor: '#1f1f1f',
+    backgroundColor: '#0f0f0f',
   },
   textInput: {
     flex: 1,
     backgroundColor: '#1a1a1a',
-    borderRadius: 20,
+    borderRadius: 22,
     paddingHorizontal: 16,
     paddingVertical: 10,
     color: '#fff',
@@ -261,5 +321,18 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
     borderRadius: 999,
+  },
+  grabberContainer: {
+    position: 'absolute',
+    top: 6,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  grabber: {
+    width: 44,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#2a2a2a',
   },
 });
