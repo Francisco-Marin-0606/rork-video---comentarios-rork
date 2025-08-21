@@ -197,137 +197,6 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
   const sheetHeight = Math.round(screenHeight * (isKeyboardVisible ? 0.9 : 0.75));
   const offscreenTranslate = sheetHeight + (insets?.bottom ?? 0);
 
-  const isWeb = Platform.OS === 'web';
-
-  const Sheet: React.FC = () => (
-    <View style={styles.modalOverlay} testID="comments-overlay">
-      <TouchableOpacity
-        accessibilityRole="button"
-        activeOpacity={1}
-        onPress={handleAnimatedClose}
-        style={{ flex: 1 }}
-        testID="comments-backdrop"
-      />
-      <Animated.View
-        style={{
-          height: sheetHeight,
-          borderTopLeftRadius: 28,
-          borderTopRightRadius: 28,
-          overflow: 'hidden',
-          backgroundColor: '#1a1a1a',
-          opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
-          transform: [
-            {
-              translateY: progress.interpolate({
-                inputRange: [0, 1],
-                outputRange: [offscreenTranslate, 0],
-              }),
-            },
-            { translateY: dragY },
-          ],
-        }}
-        testID="comments-sheet"
-      >
-        <KeyboardAvoidingView
-          style={styles.kbContainer}
-          behavior={undefined}
-          keyboardVerticalOffset={0}
-        >
-          <View style={styles.header} {...panResponder.panHandlers}>
-            <View style={styles.grabberContainer}>
-              <View style={styles.grabber} />
-            </View>
-            <View style={styles.headerSide} />
-            <Text style={styles.headerTitle}>Comentarios</Text>
-            <TouchableOpacity
-              onPress={handleAnimatedClose}
-              accessibilityRole="button"
-              accessibilityLabel="Cerrar comentarios"
-              style={styles.closeButton}
-              testID="comments-close"
-            >
-              <X color="#ffffff" size={22} />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView
-            style={styles.commentsContainer}
-            contentContainerStyle={{ paddingBottom: 96 + keyboardHeight + (insets?.bottom ?? 0) }}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            testID="comments-list"
-          >
-            {comments.map((comment) => (
-              <View key={comment.id} style={styles.commentItem}>
-                <View style={styles.commentContent}>
-                  <View style={styles.commentHeader}>
-                    <Text style={styles.username}>{comment.username}</Text>
-                    <Text style={styles.timestamp}>{comment.timestamp}</Text>
-                  </View>
-                  <Text style={styles.commentText}>{comment.text}</Text>
-                </View>
-              </View>
-            ))}
-          </ScrollView>
-
-          <View
-            style={{
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: keyboardHeight + (isKeyboardVisible ? 0 : (insets?.bottom ?? 0)),
-              backgroundColor: '#1a1a1a',
-            }}
-            pointerEvents="none"
-            testID="comments-kb-filler"
-          />
-          <Animated.View
-            style={[
-              styles.bottomBarContainer,
-              {
-                bottom: keyboardHeight,
-                paddingBottom: (isKeyboardVisible ? 12 : 12 + (insets?.bottom ?? 0)),
-              },
-            ]}
-            testID="comments-bottom-bar"
-          >
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Escribe un comentario…"
-                placeholderTextColor="#9aa0a6"
-                selectionColor="#5b7cfa"
-                value={newComment}
-                onChangeText={setNewComment}
-                multiline
-                maxLength={250}
-                testID="comments-input"
-              />
-              <TouchableOpacity
-                onPress={handleAddComment}
-                style={[styles.sendButton, { opacity: newComment.trim() ? 1 : 0.6 }]}
-                disabled={!newComment.trim()}
-                testID="comments-send"
-              >
-                <ArrowUp color="#ffffff" size={20} />
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        </KeyboardAvoidingView>
-      </Animated.View>
-    </View>
-  );
-
-  if (isWeb) {
-    if (!localVisible) return null;
-    return (
-      <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-        <Sheet />
-      </View>
-    );
-  }
-
   return (
     <Modal
       visible={localVisible}
@@ -335,8 +204,125 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
       presentationStyle="overFullScreen"
       statusBarTranslucent
       onRequestClose={handleAnimatedClose}
-    >
-      <Sheet />
+>
+      <View style={styles.modalOverlay} testID="comments-overlay">
+        <TouchableOpacity
+          accessibilityRole="button"
+          activeOpacity={1}
+          onPress={handleAnimatedClose}
+          style={{ flex: 1 }}
+          testID="comments-backdrop"
+        />
+        <Animated.View
+          style={{
+            height: sheetHeight,
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
+            overflow: 'hidden',
+            backgroundColor: '#1a1a1a',
+            opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
+            transform: [
+              {
+                translateY: progress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [offscreenTranslate, 0],
+                }),
+              },
+              { translateY: dragY },
+            ],
+          }}
+          testID="comments-sheet"
+        >
+          <KeyboardAvoidingView
+            style={styles.kbContainer}
+            behavior={undefined}
+            keyboardVerticalOffset={0}
+          >
+            <View style={styles.header} {...panResponder.panHandlers}>
+              <View style={styles.grabberContainer}>
+                <View style={styles.grabber} />
+              </View>
+              <View style={styles.headerSide} />
+              <Text style={styles.headerTitle}>Comentarios</Text>
+              <TouchableOpacity
+                onPress={handleAnimatedClose}
+                accessibilityRole="button"
+                accessibilityLabel="Cerrar comentarios"
+                style={styles.closeButton}
+                testID="comments-close"
+              >
+                <X color="#ffffff" size={22} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={styles.commentsContainer}
+              contentContainerStyle={{ paddingBottom: 96 + keyboardHeight + (insets?.bottom ?? 0) }}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              testID="comments-list"
+            >
+              {comments.map((comment) => (
+                <View key={comment.id} style={styles.commentItem}>
+                  <View style={styles.commentContent}>
+                    <View style={styles.commentHeader}>
+                      <Text style={styles.username}>{comment.username}</Text>
+                      <Text style={styles.timestamp}>{comment.timestamp}</Text>
+                    </View>
+                    <Text style={styles.commentText}>{comment.text}</Text>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+
+            {/* Background filler to avoid grey gap when keyboard is open */}
+            <View
+              style={{
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: keyboardHeight + (isKeyboardVisible ? 0 : (insets?.bottom ?? 0)),
+                backgroundColor: '#1a1a1a',
+              }}
+              pointerEvents="none"
+              testID="comments-kb-filler"
+            />
+            <Animated.View
+              style={[
+                styles.bottomBarContainer,
+                {
+                  bottom: keyboardHeight,
+                  paddingBottom: (isKeyboardVisible ? 12 : 12 + (insets?.bottom ?? 0)),
+                },
+              ]}
+              testID="comments-bottom-bar"
+            >
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Escribe un comentario…"
+                  placeholderTextColor="#9aa0a6"
+                  selectionColor="#5b7cfa"
+                  value={newComment}
+                  onChangeText={setNewComment}
+                  multiline
+                  maxLength={250}
+                  testID="comments-input"
+                />
+                <TouchableOpacity
+                  onPress={handleAddComment}
+                  style={[styles.sendButton, { opacity: newComment.trim() ? 1 : 0.6 }]}
+                  disabled={!newComment.trim()}
+                  testID="comments-send"
+                >
+                  <ArrowUp color="#ffffff" size={20} />
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          </KeyboardAvoidingView>
+        </Animated.View>
+      </View>
     </Modal>
   );
 }
