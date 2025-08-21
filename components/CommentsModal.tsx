@@ -165,12 +165,12 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponderCapture: (_: GestureResponderEvent, g) => {
-        const start = Math.abs(g.dy) > 2 && Math.abs(g.dx) < 24 && g.dy > 0;
+        const start = g.dy > 1 && Math.abs(g.dx) < 32;
         if (start) console.log('CommentsModal header swipe start (capture)');
         return start;
       },
       onMoveShouldSetPanResponder: (_: GestureResponderEvent, g) => {
-        const start = Math.abs(g.dy) > 2 && Math.abs(g.dx) < 24 && g.dy > 0;
+        const start = g.dy > 1 && Math.abs(g.dx) < 32;
         if (start) console.log('CommentsModal header swipe start');
         return start;
       },
@@ -184,12 +184,14 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
       },
       onPanResponderRelease: (_: GestureResponderEvent, g) => {
         isDraggingRef.current = false;
-        const shouldClose = g.dy > 32 || g.vy > 0.35;
+        const fastShort = g.vy > 0.6 && g.dy > 8;
+        const longPull = g.dy > 24;
+        const shouldClose = fastShort || longPull;
         console.log('CommentsModal header swipe release', { dy: g.dy, vy: g.vy, shouldClose });
         if (shouldClose) {
           handleAnimatedClose();
         } else {
-          Animated.timing(dragY, { toValue: 0, duration: 160, useNativeDriver: true }).start();
+          Animated.timing(dragY, { toValue: 0, duration: 120, useNativeDriver: true }).start();
         }
       },
       onPanResponderTerminate: () => {
