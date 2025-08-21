@@ -207,7 +207,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
         >
           <KeyboardAvoidingView
             style={styles.kbContainer}
-            behavior={undefined}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           >
             <View style={styles.header} {...panResponder.panHandlers}>
               <View style={styles.grabberContainer}>
@@ -228,7 +228,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
 
             <ScrollView
               style={styles.commentsContainer}
-              contentContainerStyle={{ paddingBottom: 96 + (isKeyboardVisible ? 0 : (insets?.bottom ?? 0)) }}
+              contentContainerStyle={{ paddingBottom: 96 + (Platform.OS === 'ios' ? 0 : keyboardHeight) + (insets?.bottom ?? 0) }}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
               testID="comments-list"
@@ -253,7 +253,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
                 left: 0,
                 right: 0,
                 bottom: 0,
-                height: keyboardHeight + (isKeyboardVisible ? 0 : (insets?.bottom ?? 0)),
+                height: (Platform.OS === 'ios' ? 0 : keyboardHeight) + (isKeyboardVisible ? 0 : (insets?.bottom ?? 0)),
                 backgroundColor: '#1a1a1a',
               }}
               pointerEvents="none"
@@ -265,9 +265,11 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
                 {
                   bottom: 0,
                   paddingBottom: (isKeyboardVisible ? 12 : 12 + (insets?.bottom ?? 0)),
-                  transform: [
-                    { translateY: Animated.multiply(keyboardOffset, -1) },
-                  ],
+                  transform: Platform.OS === 'ios'
+                    ? [{ translateY: 0 }]
+                    : [
+                        { translateY: Animated.multiply(keyboardOffset, -1) },
+                      ],
                 },
               ]}
               testID="comments-bottom-bar"
@@ -388,6 +390,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: '#1a1a1a',
     paddingBottom: 0,
+    zIndex: 3,
+    elevation: 3,
   },
   emojiBar: {
     flexDirection: 'row',
