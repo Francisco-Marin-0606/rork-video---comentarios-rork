@@ -15,6 +15,7 @@ import {
   PanResponder,
   GestureResponderEvent,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowUp } from 'lucide-react-native';
 import { Comment } from '@/types/video';
 import { mockComments } from '@/mocks/comments';
@@ -29,6 +30,7 @@ interface CommentsModalProps {
 const { height: screenHeight } = Dimensions.get('window');
 
 export default function CommentsModal({ visible, onClose, onCountChange, onKeyboardChange }: CommentsModalProps) {
+  const insets = useSafeAreaInsets();
   const [comments, setComments] = useState<Comment[]>(mockComments);
   const [newComment, setNewComment] = useState<string>('');
   const [isKeyboardVisible, setIsKeyboardVisible] = useState<boolean>(false);
@@ -238,7 +240,8 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
               style={[
                 styles.bottomBarContainer,
                 {
-                  bottom: isKeyboardVisible ? 0 : 20,
+                  bottom: 0,
+                  paddingBottom: 12 + (insets?.bottom ?? 0),
                   transform: [
                     {
                       translateY: keyboardOffset.interpolate({
@@ -366,8 +369,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 20,
+    bottom: 0,
     backgroundColor: '#1a1a1a',
+    paddingBottom: 12,
   },
   emojiBar: {
     flexDirection: 'row',
