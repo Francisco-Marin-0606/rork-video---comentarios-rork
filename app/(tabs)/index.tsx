@@ -33,7 +33,7 @@ export default function VideoScreen() {
   const [playbackStatus, setPlaybackStatus] = useState<AVPlaybackStatus | null>(null);
 
   const [iconVisible, setIconVisible] = useState<boolean>(false);
-  const [commentsCount] = useState<number>(mockComments.length);
+  const [commentsCount, setCommentsCount] = useState<number>(mockComments.length);
   const iconOpacity = useRef<Animated.Value>(new Animated.Value(0)).current;
   const fadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevIsPlaying = useRef<boolean>(false);
@@ -262,6 +262,10 @@ export default function VideoScreen() {
       <CommentsModal
         visible={showCommentsModal}
         onClose={() => setShowCommentsModal(false)}
+        onCountChange={(n: number) => {
+          console.log('Comments count changed', n);
+          setCommentsCount(n);
+        }}
       />
     </View>
   );

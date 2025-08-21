@@ -21,11 +21,12 @@ import { mockComments } from '@/mocks/comments';
 interface CommentsModalProps {
   visible: boolean;
   onClose: () => void;
+  onCountChange?: (count: number) => void;
 }
 
 const { height: screenHeight } = Dimensions.get('window');
 
-export default function CommentsModal({ visible, onClose }: CommentsModalProps) {
+export default function CommentsModal({ visible, onClose, onCountChange }: CommentsModalProps) {
   const [comments, setComments] = useState<Comment[]>(mockComments);
   const [newComment, setNewComment] = useState<string>('');
   const [isKeyboardVisible, setIsKeyboardVisible] = useState<boolean>(false);
@@ -110,10 +111,13 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
     };
   }, [keyboardOffset]);
 
-  const EMOJIS = useMemo<string[]>(() => ['😂','😭','🔥','💀','😅','🤫','😮','😆'], []);
-  const handleAddEmoji = (emoji: string) => {
-    setNewComment((prev) => `${prev}${prev ? ' ' : ''}${emoji}`);
-  };
+  useEffect(() => {
+    try {
+      onCountChange?.(comments.length);
+    } catch (e) {
+      console.log('onCountChange error', e);
+    }
+  }, [comments.length, onCountChange]);
 
   const handleAddComment = () => {
     if (newComment.trim()) {
@@ -211,14 +215,6 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
               ]}
               testID="comments-bottom-bar"
             >
-              <View style={styles.emojiBar} testID="comments-emoji-bar">
-                {EMOJIS.map((e) => (
-                  <TouchableOpacity key={e} onPress={() => handleAddEmoji(e)} style={styles.emojiBtn}>
-                    <Text style={styles.emojiText}>{e}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
               <View style={styles.inputContainer}>
                 <TextInput
                   style={styles.textInput}
