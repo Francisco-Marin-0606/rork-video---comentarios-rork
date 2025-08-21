@@ -13,7 +13,7 @@ import {
   Animated,
   Keyboard,
 } from 'react-native';
-import { X, ArrowUp } from 'lucide-react-native';
+import { ArrowUp } from 'lucide-react-native';
 import { Comment } from '@/types/video';
 import { mockComments } from '@/mocks/comments';
 
@@ -178,9 +178,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
               </View>
               <View style={styles.headerSide} />
               <Text style={styles.headerTitle}>Comentarios</Text>
-              <TouchableOpacity onPress={handleAnimatedClose} style={styles.closeButton} testID="comments-close">
-                <X color="#fff" size={24} />
-              </TouchableOpacity>
+              <View style={styles.headerSide} />
             </View>
 
             <ScrollView
@@ -285,7 +283,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flex: 1,
     textAlign: 'center',
-    marginTop: 5,
+    marginTop: 10,
   },
   closeButton: {
     width: 36,
