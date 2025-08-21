@@ -163,16 +163,24 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_: GestureResponderEvent, g) => Math.abs(g.dy) > 5,
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_: GestureResponderEvent, g) => {
+        const start = Math.abs(g.dy) > 6 && Math.abs(g.dx) < 24 && g.dy > 0;
+        if (start) console.log('CommentsModal header swipe start');
+        return start;
+      },
       onPanResponderGrant: () => {
         isDraggingRef.current = true;
         dragY.setValue(0);
       },
-      onPanResponderMove: Animated.event([null, { dy: dragY }], { useNativeDriver: true }),
+      onPanResponderMove: (_: GestureResponderEvent, g) => {
+        const y = g.dy > 0 ? g.dy : 0;
+        dragY.setValue(y);
+      },
       onPanResponderRelease: (_: GestureResponderEvent, g) => {
         isDraggingRef.current = false;
-        const shouldClose = g.dy > 80 || g.vy > 0.8;
+        const shouldClose = g.dy > 64 || g.vy > 0.8;
+        console.log('CommentsModal header swipe release', { dy: g.dy, vy: g.vy, shouldClose });
         if (shouldClose) {
           handleAnimatedClose();
         } else {
