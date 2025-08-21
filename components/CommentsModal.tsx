@@ -73,10 +73,9 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
       setKeyboardHeight(0);
       keyboardOffset.setValue(0);
       isAnimatingRef.current = true;
-      const offscreenY = Math.round(screenHeight);
       Animated.parallel([
         Animated.timing(progress, { toValue: 0, duration: EXIT_DURATION, useNativeDriver: true }),
-        Animated.timing(dragY, { toValue: offscreenY, duration: EXIT_DURATION, useNativeDriver: true }),
+        Animated.timing(dragY, { toValue: 0, duration: EXIT_DURATION, useNativeDriver: true }),
       ]).start(({ finished }) => {
         console.log('CommentsModal manual exit finished', finished);
         setLocalVisible(false);
