@@ -22,11 +22,12 @@ interface CommentsModalProps {
   visible: boolean;
   onClose: () => void;
   onCountChange?: (count: number) => void;
+  onKeyboardChange?: (visible: boolean) => void;
 }
 
 const { height: screenHeight } = Dimensions.get('window');
 
-export default function CommentsModal({ visible, onClose, onCountChange }: CommentsModalProps) {
+export default function CommentsModal({ visible, onClose, onCountChange, onKeyboardChange }: CommentsModalProps) {
   const [comments, setComments] = useState<Comment[]>(mockComments);
   const [newComment, setNewComment] = useState<string>('');
   const [isKeyboardVisible, setIsKeyboardVisible] = useState<boolean>(false);
@@ -87,6 +88,7 @@ export default function CommentsModal({ visible, onClose, onCountChange }: Comme
 
     const showSub = Keyboard.addListener(showEvent, (e: unknown) => {
       setIsKeyboardVisible(true);
+      try { onKeyboardChange?.(true); } catch (err) { console.log('onKeyboardChange show error', err); }
       const evt = e as { endCoordinates?: { height?: number }; duration?: number } | undefined;
       const h = evt?.endCoordinates?.height ?? 0;
       const heightNum = typeof h === 'number' ? h : 0;
@@ -98,6 +100,7 @@ export default function CommentsModal({ visible, onClose, onCountChange }: Comme
 
     const hideSub = Keyboard.addListener(hideEvent, (e: unknown) => {
       setIsKeyboardVisible(false);
+      try { onKeyboardChange?.(false); } catch (err) { console.log('onKeyboardChange hide error', err); }
       setKeyboardHeight(0);
       const evt = e as { duration?: number } | undefined;
       const duration = typeof evt?.duration === 'number' ? evt!.duration! : (isIOS ? 250 : 0);
@@ -109,7 +112,7 @@ export default function CommentsModal({ visible, onClose, onCountChange }: Comme
       showSub.remove();
       hideSub.remove();
     };
-  }, [keyboardOffset]);
+  }, [keyboardOffset, onKeyboardChange]);
 
   useEffect(() => {
     try {
@@ -149,7 +152,7 @@ export default function CommentsModal({ visible, onClose, onCountChange }: Comme
         />
         <Animated.View
           style={{
-            height: Math.round(screenHeight * 0.75),
+            height: Math.round(screenHeight * (isKeyboardVisible ? 0.9 : 0.75)),
             borderTopLeftRadius: 18,
             borderTopRightRadius: 18,
             overflow: 'hidden',

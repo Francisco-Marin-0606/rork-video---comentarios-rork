@@ -266,6 +266,20 @@ export default function VideoScreen() {
           console.log('Comments count changed', n);
           setCommentsCount(n);
         }}
+        onKeyboardChange={async (vis: boolean) => {
+          try {
+            const v = videoRef.current;
+            if (!v) return;
+            const status = await v.getStatusAsync();
+            if ('isLoaded' in status && status.isLoaded) {
+              if (vis) {
+                await v.pauseAsync();
+              }
+            }
+          } catch (e) {
+            console.log('onKeyboardChange video pause error', e);
+          }
+        }}
       />
     </View>
   );
