@@ -164,6 +164,11 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponderCapture: (_: GestureResponderEvent, g) => {
+        const start = Math.abs(g.dy) > 6 && Math.abs(g.dx) < 24 && g.dy > 0;
+        if (start) console.log('CommentsModal header swipe start (capture)');
+        return start;
+      },
       onMoveShouldSetPanResponder: (_: GestureResponderEvent, g) => {
         const start = Math.abs(g.dy) > 6 && Math.abs(g.dx) < 24 && g.dy > 0;
         if (start) console.log('CommentsModal header swipe start');

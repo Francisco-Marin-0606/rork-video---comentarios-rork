@@ -18,7 +18,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Videos",
+          title: "",
           tabBarIcon: ({ color }) => <Play color={color} size={24} />,
         }}
       />
