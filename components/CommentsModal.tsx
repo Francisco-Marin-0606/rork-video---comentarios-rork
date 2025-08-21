@@ -228,7 +228,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
 
             <ScrollView
               style={styles.commentsContainer}
-              contentContainerStyle={{ paddingBottom: 96 + keyboardHeight }}
+              contentContainerStyle={{ paddingBottom: 96 + (isKeyboardVisible ? 0 : (insets?.bottom ?? 0)) }}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
               testID="comments-list"
@@ -253,7 +253,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
                 left: 0,
                 right: 0,
                 bottom: 0,
-                height: keyboardHeight,
+                height: keyboardHeight + (isKeyboardVisible ? 0 : (insets?.bottom ?? 0)),
                 backgroundColor: '#1a1a1a',
               }}
               pointerEvents="none"
@@ -264,7 +264,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
                 styles.bottomBarContainer,
                 {
                   bottom: 0,
-                  paddingBottom: 12 + (insets?.bottom ?? 0),
+                  paddingBottom: (isKeyboardVisible ? 12 : 12 + (insets?.bottom ?? 0)),
                   transform: [
                     { translateY: Animated.multiply(keyboardOffset, -1) },
                   ],
