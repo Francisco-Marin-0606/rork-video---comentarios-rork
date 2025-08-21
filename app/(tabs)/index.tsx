@@ -348,8 +348,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   playPauseIcon: {
-    width: 72,
-    height: 72,
+    width: 50,
+    height: 50,
   },
   controlsRow: {
     position: 'absolute',
