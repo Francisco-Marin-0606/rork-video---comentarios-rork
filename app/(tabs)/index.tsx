@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -20,8 +20,27 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 import { Video, AVPlaybackStatus, ResizeMode, Audio } from 'expo-av';
 
+const GS_VIDEO = 'gs://mental-portals.firebasestorage.app/Intro a la hipnosis.mp4' as const;
+
+function gsToFirebaseHttps(gsUrl: string): string {
+  try {
+    if (!gsUrl.startsWith('gs://')) return gsUrl;
+    const withoutScheme = gsUrl.replace('gs://', '');
+    const firstSlash = withoutScheme.indexOf('/');
+    const bucket = firstSlash === -1 ? withoutScheme : withoutScheme.slice(0, firstSlash);
+    const objectPath = firstSlash === -1 ? '' : withoutScheme.slice(firstSlash + 1);
+    const encodedPath = encodeURIComponent(objectPath);
+    const base = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodedPath}`;
+    const url = `${base}?alt=media`;
+    return url;
+  } catch (e) {
+    console.log('gsToFirebaseHttps error', e);
+    return gsUrl;
+  }
+}
+
 const VIDEO_SOURCE = {
-  uri: 'https://firebasestorage.googleapis.com/v0/b/samples-64df5.appspot.com/o/Intro%20a%20la%20hipnosis.mp4?alt=media&token=613551ee-ad60-48ee-b0cc-cf1358956fc1',
+  uri: gsToFirebaseHttps(GS_VIDEO),
 } as const;
 
 export default function VideoScreen() {
