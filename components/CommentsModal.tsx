@@ -97,10 +97,12 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
     const showSub = Keyboard.addListener(showEvent, (e: unknown) => {
       setIsKeyboardVisible(true);
       try { onKeyboardChange?.(true); } catch (err) { console.log('onKeyboardChange show error', err); }
-      const evt = e as { endCoordinates?: { height?: number }; duration?: number } | undefined;
-      const h = evt?.endCoordinates?.height ?? 0;
-      const heightNum = typeof h === 'number' ? h : 0;
-      const duration = typeof evt?.duration === 'number' ? evt!.duration! : (isIOS ? 250 : 0);
+      const evt = e as { endCoordinates?: { height?: number; screenY?: number }; duration?: number } | undefined;
+      const rawH = evt?.endCoordinates?.height ?? 0;
+      const screenY = typeof evt?.endCoordinates?.screenY === 'number' ? (evt?.endCoordinates?.screenY as number) : undefined;
+      const fromScreenY = typeof screenY === 'number' ? Math.max(0, screenHeight - screenY) : 0;
+      const heightNum = (typeof rawH === 'number' && rawH > 0 ? rawH : fromScreenY) ?? 0;
+      const duration = typeof evt?.duration === 'number' ? (evt!.duration! as number) : (isIOS ? 250 : 0);
       setKeyboardHeight(heightNum);
       Animated.timing(keyboardOffset, { toValue: heightNum, duration, useNativeDriver: true }).start();
       console.log(showEvent, heightNum, duration);
@@ -111,7 +113,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
       try { onKeyboardChange?.(false); } catch (err) { console.log('onKeyboardChange hide error', err); }
       setKeyboardHeight(0);
       const evt = e as { duration?: number } | undefined;
-      const duration = typeof evt?.duration === 'number' ? evt!.duration! : (isIOS ? 250 : 0);
+      const duration = typeof evt?.duration === 'number' ? (evt!.duration! as number) : (isIOS ? 250 : 0);
       Animated.timing(keyboardOffset, { toValue: 0, duration, useNativeDriver: true }).start();
       console.log(hideEvent, duration);
     });
@@ -226,7 +228,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
 
             <ScrollView
               style={styles.commentsContainer}
-              contentContainerStyle={{ paddingBottom: 96 }}
+              contentContainerStyle={{ paddingBottom: 96 + keyboardHeight }}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
               testID="comments-list"
@@ -244,6 +246,19 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
               ))}
             </ScrollView>
 
+            {/* Background filler to avoid grey gap when keyboard is open */}
+            <View
+              style={{
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: keyboardHeight,
+                backgroundColor: '#1a1a1a',
+              }}
+              pointerEvents="none"
+              testID="comments-kb-filler"
+            />
             <Animated.View
               style={[
                 styles.bottomBarContainer,
@@ -251,9 +266,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
                   bottom: 0,
                   paddingBottom: 12 + (insets?.bottom ?? 0),
                   transform: [
-                    {
-                      translateY: Animated.multiply(keyboardOffset, -1),
-                    },
+                    { translateY: Animated.multiply(keyboardOffset, -1) },
                   ],
                 },
               ]}
