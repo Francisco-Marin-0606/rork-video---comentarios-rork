@@ -36,6 +36,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
   const [isKeyboardVisible, setIsKeyboardVisible] = useState<boolean>(false);
   const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
   const keyboardOffset = useRef<Animated.Value>(new Animated.Value(0)).current;
+  const lastKbHeightRef = useRef<number>(0);
 
   const ENTER_DURATION = 280;
   const EXIT_DURATION = 240;
@@ -91,31 +92,45 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
 
   useEffect(() => {
     const isIOS = Platform.OS === 'ios';
-    const showEvent = isIOS ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = isIOS ? 'keyboardWillHide' : 'keyboardDidHide';
 
-    const showSub = Keyboard.addListener(showEvent, (e: unknown) => {
+    if (isIOS) {
+      const changeSub = Keyboard.addListener('keyboardWillChangeFrame', (e: unknown) => {
+        const evt = e as { endCoordinates?: { screenY?: number } ; duration?: number } | undefined;
+        const screenY = typeof evt?.endCoordinates?.screenY === 'number' ? (evt?.endCoordinates?.screenY as number) : screenHeight;
+        const nextHeight = Math.max(0, screenHeight - screenY);
+        const duration = typeof evt?.duration === 'number' ? (evt!.duration! as number) : 250;
+        const becameVisible = nextHeight > 0;
+        if (lastKbHeightRef.current === nextHeight) return;
+        lastKbHeightRef.current = nextHeight;
+        setIsKeyboardVisible(becameVisible);
+        try { onKeyboardChange?.(becameVisible); } catch (err) { console.log('onKeyboardChange changeFrame error', err); }
+        setKeyboardHeight(nextHeight);
+        Animated.timing(keyboardOffset, { toValue: nextHeight, duration, useNativeDriver: true }).start();
+        console.log('keyboardWillChangeFrame', nextHeight, duration);
+      });
+      return () => {
+        changeSub.remove();
+      };
+    }
+
+    const showSub = Keyboard.addListener('keyboardDidShow', (e: unknown) => {
       setIsKeyboardVisible(true);
       try { onKeyboardChange?.(true); } catch (err) { console.log('onKeyboardChange show error', err); }
-      const evt = e as { endCoordinates?: { height?: number; screenY?: number }; duration?: number } | undefined;
-      const rawH = evt?.endCoordinates?.height ?? 0;
-      const screenY = typeof evt?.endCoordinates?.screenY === 'number' ? (evt?.endCoordinates?.screenY as number) : undefined;
-      const fromScreenY = typeof screenY === 'number' ? Math.max(0, screenHeight - screenY) : 0;
-      const heightNum = (typeof rawH === 'number' && rawH > 0 ? rawH : fromScreenY) ?? 0;
-      const duration = typeof evt?.duration === 'number' ? (evt!.duration! as number) : (isIOS ? 250 : 0);
+      const evt = e as { endCoordinates?: { height?: number } } | undefined;
+      const heightNum = typeof evt?.endCoordinates?.height === 'number' ? (evt?.endCoordinates?.height as number) : 0;
+      lastKbHeightRef.current = heightNum;
       setKeyboardHeight(heightNum);
-      Animated.timing(keyboardOffset, { toValue: heightNum, duration, useNativeDriver: true }).start();
-      console.log(showEvent, heightNum, duration);
+      Animated.timing(keyboardOffset, { toValue: heightNum, duration: 0, useNativeDriver: true }).start();
+      console.log('keyboardDidShow', heightNum);
     });
 
-    const hideSub = Keyboard.addListener(hideEvent, (e: unknown) => {
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
       setIsKeyboardVisible(false);
       try { onKeyboardChange?.(false); } catch (err) { console.log('onKeyboardChange hide error', err); }
+      lastKbHeightRef.current = 0;
       setKeyboardHeight(0);
-      const evt = e as { duration?: number } | undefined;
-      const duration = typeof evt?.duration === 'number' ? (evt!.duration! as number) : (isIOS ? 250 : 0);
-      Animated.timing(keyboardOffset, { toValue: 0, duration, useNativeDriver: true }).start();
-      console.log(hideEvent, duration);
+      Animated.timing(keyboardOffset, { toValue: 0, duration: 0, useNativeDriver: true }).start();
+      console.log('keyboardDidHide');
     });
 
     return () => {
@@ -175,6 +190,8 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
     <Modal
       visible={localVisible}
       transparent
+      presentationStyle="overFullScreen"
+      statusBarTranslucent
       onRequestClose={handleAnimatedClose}
 >
       <View style={styles.modalOverlay} testID="comments-overlay">
@@ -208,6 +225,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
           <KeyboardAvoidingView
             style={styles.kbContainer}
             behavior={undefined}
+            keyboardVerticalOffset={0}
           >
             <View style={styles.header} {...panResponder.panHandlers}>
               <View style={styles.grabberContainer}>
@@ -263,11 +281,8 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
               style={[
                 styles.bottomBarContainer,
                 {
-                  bottom: 0,
+                  bottom: keyboardHeight,
                   paddingBottom: (isKeyboardVisible ? 12 : 12 + (insets?.bottom ?? 0)),
-                  transform: [
-                        { translateY: Animated.multiply(keyboardOffset, -1) },
-                      ],
                 },
               ]}
               testID="comments-bottom-bar"
