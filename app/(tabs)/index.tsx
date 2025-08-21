@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
   },
   controlsRow: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 40,
     left: 0,
     right: 0,
     flexDirection: 'row',
