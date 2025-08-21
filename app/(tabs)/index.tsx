@@ -261,7 +261,20 @@ export default function VideoScreen() {
 
       <CommentsModal
         visible={showCommentsModal}
-        onClose={() => setShowCommentsModal(false)}
+        onClose={async () => {
+          try {
+            setShowCommentsModal(false);
+            const v = videoRef.current;
+            if (!v) return;
+            const status = await v.getStatusAsync();
+            if ('isLoaded' in status && status.isLoaded) {
+              await v.playAsync();
+              console.log('Video resumed on comments modal close');
+            }
+          } catch (e) {
+            console.log('onClose resume video error', e);
+          }
+        }}
         onCountChange={(n: number) => {
           console.log('Comments count changed', n);
           setCommentsCount(n);
@@ -274,10 +287,14 @@ export default function VideoScreen() {
             if ('isLoaded' in status && status.isLoaded) {
               if (vis) {
                 await v.pauseAsync();
+                console.log('Video paused on keyboard open');
+              } else {
+                await v.playAsync();
+                console.log('Video resumed on keyboard close');
               }
             }
           } catch (e) {
-            console.log('onKeyboardChange video pause error', e);
+            console.log('onKeyboardChange video pause/resume error', e);
           }
         }}
       />
