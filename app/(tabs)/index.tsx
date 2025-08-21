@@ -20,27 +20,8 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 import { Video, AVPlaybackStatus, ResizeMode, Audio } from 'expo-av';
 
-const GS_VIDEO = 'gs://mental-portals.firebasestorage.app/Intro a la hipnosis.mp4' as const;
-
-function gsToFirebaseHttps(gsUrl: string): string {
-  try {
-    if (!gsUrl.startsWith('gs://')) return gsUrl;
-    const withoutScheme = gsUrl.replace('gs://', '');
-    const firstSlash = withoutScheme.indexOf('/');
-    const bucket = firstSlash === -1 ? withoutScheme : withoutScheme.slice(0, firstSlash);
-    const objectPath = firstSlash === -1 ? '' : withoutScheme.slice(firstSlash + 1);
-    const encodedPath = encodeURIComponent(objectPath);
-    const base = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodedPath}`;
-    const url = `${base}?alt=media`;
-    return url;
-  } catch (e) {
-    console.log('gsToFirebaseHttps error', e);
-    return gsUrl;
-  }
-}
-
 const VIDEO_SOURCE = {
-  uri: gsToFirebaseHttps(GS_VIDEO),
+  uri: 'https://firebasestorage.googleapis.com/v0/b/mental-portals.firebasestorage.app/o/Intro%20a%20la%20hipnosis.mp4?alt=media&token=7ab01077-7d4e-42f7-95b1-ed87eae06f8e',
 } as const;
 
 export default function VideoScreen() {
