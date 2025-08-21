@@ -30,6 +30,7 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
   const [newComment, setNewComment] = useState<string>('');
   const [isKeyboardVisible, setIsKeyboardVisible] = useState<boolean>(false);
   const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
+  const keyboardOffset = useRef<Animated.Value>(new Animated.Value(0)).current;
 
   const ENTER_DURATION = 280;
   const EXIT_DURATION = 240;
@@ -76,12 +77,15 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
       setIsKeyboardVisible(true);
       const evt = e as { endCoordinates?: { height?: number } } | undefined;
       const h = evt?.endCoordinates?.height ?? 0;
-      setKeyboardHeight(typeof h === 'number' ? h : 0);
-      console.log('keyboardDidShow', h);
+      const heightNum = typeof h === 'number' ? h : 0;
+      setKeyboardHeight(heightNum);
+      Animated.timing(keyboardOffset, { toValue: heightNum, duration: 180, useNativeDriver: true }).start();
+      console.log('keyboardDidShow', heightNum);
     });
     const hideSub = Keyboard.addListener('keyboardDidHide', () => {
       setIsKeyboardVisible(false);
       setKeyboardHeight(0);
+      Animated.timing(keyboardOffset, { toValue: 0, duration: 180, useNativeDriver: true }).start();
       console.log('keyboardDidHide');
     });
     return () => {
@@ -174,34 +178,52 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
               ))}
             </ScrollView>
 
-            <View style={styles.emojiBar} testID="comments-emoji-bar">
-              {EMOJIS.map((e) => (
-                <TouchableOpacity key={e} onPress={() => handleAddEmoji(e)} style={styles.emojiBtn}>
-                  <Text style={styles.emojiText}>{e}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <Animated.View
+              style={[
+                styles.bottomBarContainer,
+                {
+                  transform: [
+                    {
+                      translateY: keyboardOffset.interpolate({
+                        inputRange: [0, Math.max(250, keyboardHeight || 300)],
+                        outputRange: [0, -Math.max(250, keyboardHeight || 300)],
+                        extrapolate: 'clamp',
+                      }),
+                    },
+                  ],
+                },
+              ]}
+              testID="comments-bottom-bar"
+            >
+              <View style={styles.emojiBar} testID="comments-emoji-bar">
+                {EMOJIS.map((e) => (
+                  <TouchableOpacity key={e} onPress={() => handleAddEmoji(e)} style={styles.emojiBtn}>
+                    <Text style={styles.emojiText}>{e}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
 
-            <View style={[styles.inputContainer, isKeyboardVisible ? { paddingBottom: Math.max(12, keyboardHeight > 0 ? 12 : 12) } : null]}>
-              <TextInput
-                style={styles.textInput}
-                placeholder="¿Qué opinas sobre esto?"
-                placeholderTextColor="#666"
-                value={newComment}
-                onChangeText={setNewComment}
-                multiline
-                maxLength={500}
-                testID="comments-input"
-              />
-              <TouchableOpacity
-                onPress={handleAddComment}
-                style={[styles.sendButton, { opacity: newComment.trim() ? 1 : 0.5 }]}
-                disabled={!newComment.trim()}
-                testID="comments-send"
-              >
-                <Send color="#0095f6" size={20} />
-              </TouchableOpacity>
-            </View>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="¿Qué opinas sobre esto?"
+                  placeholderTextColor="#666"
+                  value={newComment}
+                  onChangeText={setNewComment}
+                  multiline
+                  maxLength={500}
+                  testID="comments-input"
+                />
+                <TouchableOpacity
+                  onPress={handleAddComment}
+                  style={[styles.sendButton, { opacity: newComment.trim() ? 1 : 0.5 }]}
+                  disabled={!newComment.trim()}
+                  testID="comments-send"
+                >
+                  <Send color="#0095f6" size={20} />
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
           </KeyboardAvoidingView>
         </Animated.View>
       </View>
@@ -290,6 +312,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     lineHeight: 18,
+  },
+  bottomBarContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#0f0f0f',
   },
   emojiBar: {
     flexDirection: 'row',
