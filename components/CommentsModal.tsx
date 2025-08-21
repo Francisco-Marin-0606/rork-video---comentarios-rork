@@ -293,7 +293,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
               <View style={styles.inputContainer}>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="¿Qué opinas sobre esto?"
+                  placeholder="Escribe un comentario…"
                   placeholderTextColor="#9aa0a6"
                   selectionColor="#5b7cfa"
                   value={newComment}
