@@ -205,6 +205,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
               style={[
                 styles.bottomBarContainer,
                 {
+                  bottom: isKeyboardVisible ? 0 : 20,
                   transform: [
                     {
                       translateY: keyboardOffset.interpolate({
