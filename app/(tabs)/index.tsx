@@ -279,7 +279,7 @@ export default function VideoScreen() {
           onPress={handleShowComments}
         >
           <MessageCircle color="#fff" size={18} />
-          <Text style={styles.chipText} numberOfLines={1} ellipsizeMode="tail">{commentsCount}</Text>
+          <Text style={styles.chipText} numberOfLines={1} ellipsizeMode="tail">{commentsCount > 140 ? '140+' : commentsCount}</Text>
         </TouchableOpacity>
       </View>
 
