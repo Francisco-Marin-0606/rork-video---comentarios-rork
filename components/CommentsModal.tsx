@@ -16,7 +16,7 @@ import {
   GestureResponderEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowUp } from 'lucide-react-native';
+import { ArrowUp, X } from 'lucide-react-native';
 import { Comment } from '@/types/video';
 import { mockComments } from '@/mocks/comments';
 
@@ -213,7 +213,15 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
               </View>
               <View style={styles.headerSide} />
               <Text style={styles.headerTitle}>Comentarios</Text>
-              <View style={styles.headerSide} />
+              <TouchableOpacity
+                onPress={handleAnimatedClose}
+                accessibilityRole="button"
+                accessibilityLabel="Cerrar comentarios"
+                style={styles.closeButton}
+                testID="comments-close"
+              >
+                <X color="#ffffff" size={22} />
+              </TouchableOpacity>
             </View>
 
             <ScrollView
@@ -328,8 +336,7 @@ const styles = StyleSheet.create({
     height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    borderRadius: 18,
+    backgroundColor: 'transparent',
   },
   commentsContainer: {
     flex: 1,
