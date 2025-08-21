@@ -18,7 +18,7 @@ import { mockComments } from '@/mocks/comments';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-import { VideoView, useVideoPlayer, ResizeMode, VideoViewProps } from 'expo-video';
+import { VideoView, useVideoPlayer } from 'expo-video';
 
 const FIXED_VIDEO_URI = 'https://firebasestorage.googleapis.com/v0/b/samples-64df5.appspot.com/o/Intro%20a%20la%20hipnosis.mp4?alt=media&token=613551ee-ad60-48ee-b0cc-cf1358956fc1' as const;
 
@@ -95,12 +95,22 @@ export default function VideoScreen() {
     }
   }, [loadError]);
 
-  const player = useVideoPlayer(sourceUri, {
-    autoPlay: Platform.OS === 'web' ? hasUserInteracted : true,
-    isMuted: Platform.OS === 'web' ? !hasUserInteracted : false,
-    isLooping: true,
-    staysActiveInBackground: false,
-    onStatusUpdate,
+  const player = useVideoPlayer(sourceUri, (p) => {
+    try {
+      p.loop = true;
+      p.muted = Platform.OS === 'web' ? !hasUserInteracted : false;
+      if (Platform.OS === 'web') {
+        if (hasUserInteracted) {
+          p.play();
+        } else {
+          p.pause();
+        }
+      } else {
+        p.play();
+      }
+    } catch (e) {
+      console.log('player configure error', e);
+    }
   });
 
   const handlePlayPause = async () => {
@@ -127,7 +137,14 @@ export default function VideoScreen() {
       }
       const pos = player.currentTime ?? 0;
       const next = Math.max(0, pos + deltaSeconds);
-      player.seek(next);
+      const anyP = player as unknown as { seek?: (t: number) => void; seekTo?: (t: number) => void; currentTime?: number };
+      if (typeof anyP.seek === 'function') {
+        anyP.seek(next);
+      } else if (typeof anyP.seekTo === 'function') {
+        anyP.seekTo(next);
+      } else {
+        (player as unknown as { currentTime?: number }).currentTime = next;
+      }
     } catch (e) {
       console.log('Seek error', e);
     }
@@ -138,8 +155,7 @@ export default function VideoScreen() {
       if (Platform.OS !== 'web') {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
-      const v = videoRef.current;
-      await v?.pauseAsync?.();
+      player.pause();
       setIsPlaying(false);
     } catch {}
     router.replace('/+not-found');
@@ -187,12 +203,7 @@ export default function VideoScreen() {
           allowsFullscreen={false}
           allowsPictureInPicture={false}
           nativeControls={false}
-          contentFit={ResizeMode.COVER}
-          onError={(e: unknown) => {
-            const msg = JSON.stringify(e?.nativeEvent ?? e);
-            console.log('Video onError', msg);
-            setLoadError('No se pudo cargar el video. Verifica tu conexión e inténtalo nuevamente.');
-          }}
+          contentFit="cover"
         />
 
         <View style={styles.centerOverlay} pointerEvents="none">
