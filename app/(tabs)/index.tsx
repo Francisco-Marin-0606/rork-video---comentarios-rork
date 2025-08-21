@@ -33,11 +33,13 @@ export default function VideoScreen() {
   const [playbackStatus, setPlaybackStatus] = useState<AVPlaybackStatus | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isBuffering, setIsBuffering] = useState<boolean>(false);
+  const [spinnerVisible, setSpinnerVisible] = useState<boolean>(false);
 
   const [iconVisible, setIconVisible] = useState<boolean>(false);
   const [commentsCount, setCommentsCount] = useState<number>(mockComments.length);
   const iconOpacity = useRef<Animated.Value>(new Animated.Value(0)).current;
   const fadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const spinnerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevIsPlaying = useRef<boolean>(false);
 
   const showPlayPauseIcon = useCallback(() => {
@@ -69,6 +71,7 @@ export default function VideoScreen() {
   useEffect(() => {
     return () => {
       if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
+      if (spinnerTimeoutRef.current) clearTimeout(spinnerTimeoutRef.current);
     };
   }, []);
 
@@ -184,6 +187,20 @@ export default function VideoScreen() {
     return '--';
   }, [playbackStatus]);
 
+  useEffect(() => {
+    if (spinnerTimeoutRef.current) {
+      clearTimeout(spinnerTimeoutRef.current);
+      spinnerTimeoutRef.current = null;
+    }
+    if (isLoading || isBuffering) {
+      spinnerTimeoutRef.current = setTimeout(() => {
+        setSpinnerVisible(true);
+      }, 250);
+    } else {
+      setSpinnerVisible(false);
+    }
+  }, [isLoading, isBuffering]);
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -210,12 +227,12 @@ export default function VideoScreen() {
         />
 
         <View style={styles.centerOverlay} pointerEvents="none">
-          {(isLoading || isBuffering) && (
+          {spinnerVisible && (
             <View style={styles.loadingOverlay}>
               <ActivityIndicator testID="video-loading" color="#fff" size="large" />
             </View>
           )}
-          {iconVisible && !isLoading && !isBuffering && (
+          {iconVisible && !spinnerVisible && (
             <Animated.Image
               testID={isPlaying ? 'pause-icon' : 'play-icon'}
               source={{ uri: isPlaying
