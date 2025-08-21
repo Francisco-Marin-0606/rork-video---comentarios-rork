@@ -12,6 +12,8 @@ import {
   Platform,
   Animated,
   Keyboard,
+  PanResponder,
+  GestureResponderEvent,
 } from 'react-native';
 import { ArrowUp } from 'lucide-react-native';
 import { Comment } from '@/types/video';
@@ -39,6 +41,8 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
   const [localVisible, setLocalVisible] = useState<boolean>(visible);
   const progress = useRef<Animated.Value>(new Animated.Value(0)).current;
   const isAnimatingRef = useRef<boolean>(false);
+  const dragY = useRef<Animated.Value>(new Animated.Value(0)).current;
+  const isDraggingRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (visible) {
@@ -67,7 +71,10 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
       setKeyboardHeight(0);
       keyboardOffset.setValue(0);
       isAnimatingRef.current = true;
-      Animated.timing(progress, { toValue: 0, duration: EXIT_DURATION, useNativeDriver: true }).start(({ finished }) => {
+      Animated.parallel([
+        Animated.timing(progress, { toValue: 0, duration: EXIT_DURATION, useNativeDriver: true }),
+        Animated.timing(dragY, { toValue: 0, duration: EXIT_DURATION, useNativeDriver: true }),
+      ]).start(({ finished }) => {
         console.log('CommentsModal manual exit finished', finished);
         setLocalVisible(false);
         isAnimatingRef.current = false;
@@ -135,6 +142,31 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
     }
   };
 
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_: GestureResponderEvent, g) => Math.abs(g.dy) > 5,
+      onPanResponderGrant: () => {
+        isDraggingRef.current = true;
+        dragY.setValue(0);
+      },
+      onPanResponderMove: Animated.event([null, { dy: dragY }], { useNativeDriver: true }),
+      onPanResponderRelease: (_: GestureResponderEvent, g) => {
+        isDraggingRef.current = false;
+        const shouldClose = g.dy > 80 || g.vy > 0.8;
+        if (shouldClose) {
+          handleAnimatedClose();
+        } else {
+          Animated.timing(dragY, { toValue: 0, duration: 160, useNativeDriver: true }).start();
+        }
+      },
+      onPanResponderTerminate: () => {
+        isDraggingRef.current = false;
+        Animated.timing(dragY, { toValue: 0, duration: 160, useNativeDriver: true }).start();
+      },
+    })
+  ).current;
+
   return (
     <Modal
       visible={localVisible}
@@ -164,6 +196,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
                   outputRange: [Math.round(screenHeight * 0.2), 0],
                 }),
               },
+              { translateY: dragY },
             ],
           }}
           testID="comments-sheet"
@@ -172,7 +205,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
             style={styles.kbContainer}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           >
-            <View style={styles.header}>
+            <View style={styles.header} {...panResponder.panHandlers}>
               <View style={styles.grabberContainer}>
                 <View style={styles.grabber} />
               </View>
