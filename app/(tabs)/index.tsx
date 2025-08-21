@@ -245,7 +245,7 @@ export default function VideoScreen() {
           onPress={handleSkipVideo}
         >
           <SkipForward color="#fff" size={18} />
-          <Text style={styles.chipText} numberOfLines={1} ellipsizeMode="tail">Skip</Text>
+          <Text style={styles.chipText} numberOfLines={1} ellipsizeMode="tail">Skip · {remainingLabel}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
