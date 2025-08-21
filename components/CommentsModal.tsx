@@ -205,7 +205,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
         >
           <KeyboardAvoidingView
             style={styles.kbContainer}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={undefined}
           >
             <View style={styles.header} {...panResponder.panHandlers}>
               <View style={styles.grabberContainer}>
@@ -252,11 +252,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
                   paddingBottom: 12 + (insets?.bottom ?? 0),
                   transform: [
                     {
-                      translateY: keyboardOffset.interpolate({
-                        inputRange: [0, Math.max(250, keyboardHeight || 300)],
-                        outputRange: [0, -Math.max(250, keyboardHeight || 300)],
-                        extrapolate: 'clamp',
-                      }),
+                      translateY: Animated.multiply(keyboardOffset, -1),
                     },
                   ],
                 },
@@ -378,7 +374,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: '#1a1a1a',
-    paddingBottom: 12,
+    paddingBottom: 0,
   },
   emojiBar: {
     flexDirection: 'row',
