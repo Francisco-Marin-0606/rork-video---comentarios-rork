@@ -245,7 +245,7 @@ export default function VideoScreen() {
           onPress={handleSkipVideo}
         >
           <SkipForward color="#fff" size={18} />
-          <Text style={styles.chipText} numberOfLines={1} ellipsizeMode="tail">Skip · {remainingLabel}</Text>
+          <Text style={styles.chipText} numberOfLines={1} ellipsizeMode="tail">Saltear intro · {remainingLabel}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 0,
+    gap: 8,
     paddingHorizontal: 12,
     flexWrap: 'nowrap',
     width: '100%',
@@ -362,9 +362,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    flexShrink: 1,
-    flex: 1,
-    minWidth: 0,
+    flexShrink: 0,
   },
   controlChip: {
     flexDirection: 'row',
@@ -374,7 +372,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 999,
     flexShrink: 1,
-    flex: 1,
+    flexGrow: 1,
     minWidth: 0,
   },
   controlText: {
