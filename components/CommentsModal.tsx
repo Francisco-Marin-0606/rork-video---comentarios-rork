@@ -50,14 +50,21 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
       Animated.timing(progress, { toValue: 0, duration: EXIT_DURATION, useNativeDriver: true }).start(({ finished }) => {
         console.log('CommentsModal exit finished', finished);
         setLocalVisible(false);
+        setIsKeyboardVisible(false);
+        setKeyboardHeight(0);
+        keyboardOffset.setValue(0);
         isAnimatingRef.current = false;
       });
     }
-  }, [visible, localVisible, progress]);
+  }, [visible, localVisible, progress, keyboardOffset]);
 
   const handleAnimatedClose = () => {
     try {
       if (!localVisible) return;
+      Keyboard.dismiss();
+      setIsKeyboardVisible(false);
+      setKeyboardHeight(0);
+      keyboardOffset.setValue(0);
       isAnimatingRef.current = true;
       Animated.timing(progress, { toValue: 0, duration: EXIT_DURATION, useNativeDriver: true }).start(({ finished }) => {
         console.log('CommentsModal manual exit finished', finished);
@@ -73,26 +80,35 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
   };
 
   useEffect(() => {
-    const showSub = Keyboard.addListener('keyboardDidShow', (e: unknown) => {
+    const isIOS = Platform.OS === 'ios';
+    const showEvent = isIOS ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = isIOS ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, (e: unknown) => {
       setIsKeyboardVisible(true);
-      const evt = e as { endCoordinates?: { height?: number } } | undefined;
+      const evt = e as { endCoordinates?: { height?: number }; duration?: number } | undefined;
       const h = evt?.endCoordinates?.height ?? 0;
       const heightNum = typeof h === 'number' ? h : 0;
+      const duration = typeof evt?.duration === 'number' ? evt!.duration! : (isIOS ? 250 : 0);
       setKeyboardHeight(heightNum);
-      Animated.timing(keyboardOffset, { toValue: heightNum, duration: 180, useNativeDriver: true }).start();
-      console.log('keyboardDidShow', heightNum);
+      Animated.timing(keyboardOffset, { toValue: heightNum, duration, useNativeDriver: true }).start();
+      console.log(showEvent, heightNum, duration);
     });
-    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+
+    const hideSub = Keyboard.addListener(hideEvent, (e: unknown) => {
       setIsKeyboardVisible(false);
       setKeyboardHeight(0);
-      Animated.timing(keyboardOffset, { toValue: 0, duration: 180, useNativeDriver: true }).start();
-      console.log('keyboardDidHide');
+      const evt = e as { duration?: number } | undefined;
+      const duration = typeof evt?.duration === 'number' ? evt!.duration! : (isIOS ? 250 : 0);
+      Animated.timing(keyboardOffset, { toValue: 0, duration, useNativeDriver: true }).start();
+      console.log(hideEvent, duration);
     });
+
     return () => {
       showSub.remove();
       hideSub.remove();
     };
-  }, []);
+  }, [keyboardOffset]);
 
   const EMOJIS = useMemo<string[]>(() => ['😂','😭','🔥','💀','😅','🤫','😮','😆'], []);
   const handleAddEmoji = (emoji: string) => {
@@ -118,7 +134,7 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
       visible={localVisible}
       transparent
       onRequestClose={handleAnimatedClose}
-    >
+>
       <View style={styles.modalOverlay} testID="comments-overlay">
         <TouchableOpacity
           accessibilityRole="button"
@@ -147,7 +163,7 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
         >
           <KeyboardAvoidingView
             style={styles.kbContainer}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           >
             <View style={styles.header}>
               <View style={styles.grabberContainer}>
