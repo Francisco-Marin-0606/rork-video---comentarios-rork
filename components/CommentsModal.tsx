@@ -186,6 +186,9 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
     })
   ).current;
 
+  const sheetHeight = Math.round(screenHeight * (isKeyboardVisible ? 0.9 : 0.75));
+  const offscreenTranslate = sheetHeight + (insets?.bottom ?? 0);
+
   return (
     <Modal
       visible={localVisible}
@@ -204,7 +207,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
         />
         <Animated.View
           style={{
-            height: Math.round(screenHeight * (isKeyboardVisible ? 0.9 : 0.75)),
+            height: sheetHeight,
             borderTopLeftRadius: 28,
             borderTopRightRadius: 28,
             overflow: 'hidden',
@@ -214,7 +217,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
               {
                 translateY: progress.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [Math.round(screenHeight * 0.2), 0],
+                  outputRange: [offscreenTranslate, 0],
                 }),
               },
               { translateY: dragY },
