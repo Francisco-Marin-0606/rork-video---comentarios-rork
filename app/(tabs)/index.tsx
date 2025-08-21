@@ -254,7 +254,7 @@ export default function VideoScreen() {
           onPress={handleShowComments}
         >
           <MessageCircle color="#fff" size={18} />
-          <Text style={styles.chipText} numberOfLines={1}>{commentsCount}</Text>
+          <Text style={styles.chipText} numberOfLines={1} ellipsizeMode="tail">{commentsCount}</Text>
         </TouchableOpacity>
       </View>
 
@@ -339,11 +339,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 8,
-    paddingHorizontal: 8,
-    flexWrap: 'wrap',
+    paddingHorizontal: 12,
+    flexWrap: 'nowrap',
+    width: '100%',
   },
 
 
@@ -361,6 +362,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    flexShrink: 0,
   },
   controlChip: {
     flexDirection: 'row',
@@ -370,6 +372,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 999,
     flexShrink: 1,
+    flexGrow: 1,
+    minWidth: 0,
   },
   controlText: {
     color: '#fff',
@@ -389,6 +393,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: 6,
     fontWeight: '700',
+    flexShrink: 1,
   },
 
 
