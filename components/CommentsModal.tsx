@@ -216,6 +216,8 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
 
             <ScrollView
               style={styles.commentsContainer}
+              contentContainerStyle={{ paddingBottom: 96 }}
+              keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
               testID="comments-list"
             >
@@ -297,7 +299,7 @@ const styles = StyleSheet.create({
   },
   kbContainer: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: '#1a1a1a',
   },
   header: {
     flexDirection: 'row',
