@@ -152,8 +152,8 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
         <Animated.View
           style={{
             height: Math.round(screenHeight * (isKeyboardVisible ? 0.9 : 0.75)),
-            borderTopLeftRadius: 18,
-            borderTopRightRadius: 18,
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
             overflow: 'hidden',
             backgroundColor: '#1a1a1a',
             opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
@@ -176,6 +176,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
               <View style={styles.grabberContainer}>
                 <View style={styles.grabber} />
               </View>
+              <View style={styles.headerSide} />
               <Text style={styles.headerTitle}>Comentarios</Text>
               <TouchableOpacity onPress={handleAnimatedClose} style={styles.closeButton} testID="comments-close">
                 <X color="#fff" size={24} />
@@ -275,7 +276,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#222',
-    backgroundColor: '#131313',
+    backgroundColor: '#1a1a1a',
   },
   headerTitle: {
     color: '#fff',
@@ -285,9 +286,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   closeButton: {
-    padding: 6,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    borderRadius: 999,
+    borderRadius: 18,
   },
   commentsContainer: {
     flex: 1,
@@ -390,4 +394,8 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: '#2a2a2a',
   },
+  headerSide: {
+    width: 36,
+    height: 36,
+  }
 });
