@@ -226,7 +226,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
                   value={newComment}
                   onChangeText={setNewComment}
                   multiline
-                  maxLength={500}
+                  maxLength={250}
                   testID="comments-input"
                 />
                 <TouchableOpacity
