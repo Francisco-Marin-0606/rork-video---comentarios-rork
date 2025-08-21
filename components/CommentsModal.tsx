@@ -285,6 +285,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flex: 1,
     textAlign: 'center',
+    marginTop: 5,
   },
   closeButton: {
     width: 36,
