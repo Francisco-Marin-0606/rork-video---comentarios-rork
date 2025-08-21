@@ -28,7 +28,6 @@ export default function VideoScreen() {
   const router = useRouter();
   const [showCommentsModal, setShowCommentsModal] = useState<boolean>(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [hasUserInteracted, setHasUserInteracted] = useState<boolean>(false);
   const videoRef = useRef<Video | null>(null);
   const [playbackStatus, setPlaybackStatus] = useState<AVPlaybackStatus | null>(null);
 
@@ -105,7 +104,6 @@ export default function VideoScreen() {
 
   const handlePlayPause = async () => {
     try {
-      if (!hasUserInteracted) setHasUserInteracted(true);
       if (Platform.OS !== 'web') {
         await Haptics.selectionAsync();
       }
@@ -200,6 +198,11 @@ export default function VideoScreen() {
           isMuted={Platform.OS === 'web'}
           isLooping
           useNativeControls={false}
+          progressUpdateIntervalMillis={250}
+          usePoster
+          posterSource={{ uri: 'https://images.unsplash.com/photo-1522199710521-72d69614c702?w=640&q=20' }}
+          onLoadStart={() => { console.log('Video load start'); }}
+          onLoad={() => { console.log('Video loaded'); }}
           onPlaybackStatusUpdate={onStatusUpdate}
         />
 
@@ -213,9 +216,6 @@ export default function VideoScreen() {
               style={[styles.playPauseIcon, { opacity: iconOpacity }]}
               resizeMode="contain"
             />
-          )}
-          {!hasUserInteracted && !isPlaying && (
-            <Text style={styles.tapToPlayText}>Toca para reproducir</Text>
           )}
         </View>
       </TouchableOpacity>
@@ -396,12 +396,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     textAlign: 'center',
-  },
-  tapToPlayText: {
-    color: '#fff',
-    fontSize: 14,
-    marginTop: 8,
-    textAlign: 'center',
-    fontWeight: '500',
   },
 });
