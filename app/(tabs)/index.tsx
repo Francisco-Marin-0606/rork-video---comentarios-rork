@@ -18,7 +18,7 @@ import { mockComments } from '@/mocks/comments';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-import { Video, AVPlaybackStatus, ResizeMode, Audio } from 'expo-av';
+import { VideoView, useVideoPlayer, ResizeMode, VideoViewProps } from 'expo-video';
 
 const FIXED_VIDEO_URI = 'https://firebasestorage.googleapis.com/v0/b/samples-64df5.appspot.com/o/Intro%20a%20la%20hipnosis.mp4?alt=media&token=613551ee-ad60-48ee-b0cc-cf1358956fc1' as const;
 
@@ -30,8 +30,8 @@ export default function VideoScreen() {
   const [sourceUri] = useState<string>(FIXED_VIDEO_URI);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [triedFallback] = useState<boolean>(false);
-  const videoRef = useRef<Video | null>(null);
-  const [playbackStatus, setPlaybackStatus] = useState<AVPlaybackStatus | null>(null);
+  const videoRef = useRef<VideoView | null>(null);
+  const [playbackStatus, setPlaybackStatus] = useState<Record<string, unknown> | null>(null);
 
   const [iconVisible, setIconVisible] = useState<boolean>(false);
   const [commentsCount] = useState<number>(mockComments.length);
@@ -72,22 +72,7 @@ export default function VideoScreen() {
   }, []);
 
   useEffect(() => {
-    const configureAudio = async () => {
-      try {
-        await Audio.setAudioModeAsync({
-          playsInSilentModeIOS: true,
-          allowsRecordingIOS: false,
-          staysActiveInBackground: false,
-          shouldDuckAndroid: true,
-          playThroughEarpieceAndroid: false,
-        });
-        console.log('Audio mode configured: plays in silent mode on iOS');
-      } catch (e) {
-        console.log('Error configuring audio mode', e);
-      }
-    };
-
-    configureAudio();
+    console.log('Audio config skipped (expo-video)');
   }, []);
 
   useEffect(() => {
@@ -97,13 +82,26 @@ export default function VideoScreen() {
     }
   }, [isPlaying, showPlayPauseIcon]);
 
-  const onStatusUpdate = useCallback((s: AVPlaybackStatus) => {
-    setPlaybackStatus(s);
-    if ('isLoaded' in s && s.isLoaded) {
-      setIsPlaying(s.isPlaying ?? false);
-      if (loadError) setLoadError(null);
+  const onStatusUpdate = useCallback((s: Record<string, unknown>) => {
+    try {
+      setPlaybackStatus(s);
+      if (s && typeof s === 'object') {
+        const playing = Boolean((s as any).isPlaying ?? (s as any).playing);
+        setIsPlaying(playing);
+        if (loadError) setLoadError(null);
+      }
+    } catch (e) {
+      console.log('onStatusUpdate error', e);
     }
   }, [loadError]);
+
+  const player = useVideoPlayer(sourceUri, {
+    autoPlay: Platform.OS === 'web' ? hasUserInteracted : true,
+    isMuted: Platform.OS === 'web' ? !hasUserInteracted : false,
+    isLooping: true,
+    staysActiveInBackground: false,
+    onStatusUpdate,
+  });
 
   const handlePlayPause = async () => {
     try {
@@ -111,17 +109,12 @@ export default function VideoScreen() {
       if (Platform.OS !== 'web') {
         await Haptics.selectionAsync();
       }
-      const v = videoRef.current;
-      if (!v) return;
-      const status = await v.getStatusAsync();
-      if ('isLoaded' in status && status.isLoaded) {
-        if (status.isPlaying) {
-          await v.pauseAsync();
-        } else {
-          await v.playAsync();
-        }
-        showPlayPauseIcon();
+      if (player.playing) {
+        player.pause();
+      } else {
+        player.play();
       }
+      showPlayPauseIcon();
     } catch (e) {
       console.log('handlePlayPause error', e);
     }
@@ -132,15 +125,9 @@ export default function VideoScreen() {
       if (Platform.OS !== 'web') {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
-      const v = videoRef.current;
-      if (!v) return;
-      const status = await v.getStatusAsync();
-      if ('isLoaded' in status && status.isLoaded) {
-        const duration = status.durationMillis ?? 0;
-        const current = status.positionMillis ?? 0;
-        const next = Math.max(0, Math.min(duration, current + deltaSeconds * 1000));
-        await v.setPositionAsync(next);
-      }
+      const pos = player.currentTime ?? 0;
+      const next = Math.max(0, pos + deltaSeconds);
+      player.seek(next);
     } catch (e) {
       console.log('Seek error', e);
     }
@@ -167,11 +154,11 @@ export default function VideoScreen() {
 
   const remainingLabel = React.useMemo(() => {
     try {
-      const s = playbackStatus;
-      if (s && 'isLoaded' in s && s.isLoaded) {
-        const duration = s.durationMillis ?? 0;
-        const position = s.positionMillis ?? 0;
-        const remaining = Math.max(0, duration - position);
+      const s = playbackStatus as any;
+      if (s) {
+        const durationMs = (s.durationMillis ?? (s.duration != null ? s.duration * 1000 : 0)) as number;
+        const positionMs = (s.positionMillis ?? (s.currentTime != null ? s.currentTime * 1000 : 0)) as number;
+        const remaining = Math.max(0, durationMs - positionMs);
         const totalSeconds = Math.floor(remaining / 1000);
         const m = Math.floor(totalSeconds / 60);
         const sLeft = totalSeconds % 60;
@@ -193,25 +180,19 @@ export default function VideoScreen() {
         activeOpacity={1}
         onPress={handlePlayPause}
       >
-        <Video
-          ref={(r) => { videoRef.current = r; }}
+        <VideoView
+          ref={(r: VideoView | null) => { videoRef.current = r; }}
           style={styles.video}
-          source={{ uri: sourceUri }}
-          resizeMode={ResizeMode.COVER}
-          shouldPlay={Platform.OS === 'web' ? hasUserInteracted : true}
-          isMuted={Platform.OS === 'web' ? !hasUserInteracted : false}
-          isLooping
-          useNativeControls={false}
-          onLoadStart={() => { console.log('Video onLoadStart', sourceUri); }}
-          onLoad={(data) => { console.log('Video onLoad', data); setLoadError(null); }}
-          onError={(e) => {
-            const msg = typeof e === 'string' ? e : JSON.stringify(e);
+          player={player}
+          allowsFullscreen={false}
+          allowsPictureInPicture={false}
+          nativeControls={false}
+          contentFit={ResizeMode.COVER}
+          onError={(e: unknown) => {
+            const msg = JSON.stringify(e?.nativeEvent ?? e);
             console.log('Video onError', msg);
             setLoadError('No se pudo cargar el video. Verifica tu conexión e inténtalo nuevamente.');
           }}
-          onPlaybackStatusUpdate={onStatusUpdate}
-          posterSource={{ uri: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1920&auto=format&fit=crop' }}
-          usePoster
         />
 
         <View style={styles.centerOverlay} pointerEvents="none">
