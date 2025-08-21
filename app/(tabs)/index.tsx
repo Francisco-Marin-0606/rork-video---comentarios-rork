@@ -20,17 +20,16 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 import { Video, AVPlaybackStatus, ResizeMode, Audio } from 'expo-av';
 
-const PRIMARY_VIDEO_URI = 'https://firebasestorage.googleapis.com/v0/b/samples-64df5.appspot.com/o/Intro%20a%20la%20hipnosis.mp4?alt=media&token=613551ee-ad60-48ee-b0cc-cf1358956fc1' as const;
-const FALLBACK_VIDEO_URI = 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' as const;
+const FIXED_VIDEO_URI = 'https://firebasestorage.googleapis.com/v0/b/samples-64df5.appspot.com/o/Intro%20a%20la%20hipnosis.mp4?alt=media&token=613551ee-ad60-48ee-b0cc-cf1358956fc1' as const;
 
 export default function VideoScreen() {
   const router = useRouter();
   const [showCommentsModal, setShowCommentsModal] = useState<boolean>(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [hasUserInteracted, setHasUserInteracted] = useState<boolean>(false);
-  const [sourceUri, setSourceUri] = useState<string>(PRIMARY_VIDEO_URI);
+  const [sourceUri] = useState<string>(FIXED_VIDEO_URI);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [triedFallback, setTriedFallback] = useState<boolean>(false);
+  const [triedFallback] = useState<boolean>(false);
   const videoRef = useRef<Video | null>(null);
   const [playbackStatus, setPlaybackStatus] = useState<AVPlaybackStatus | null>(null);
 
@@ -208,11 +207,7 @@ export default function VideoScreen() {
           onError={(e) => {
             const msg = typeof e === 'string' ? e : JSON.stringify(e);
             console.log('Video onError', msg);
-            setLoadError('No se pudo cargar el video. Probando fuente alternativa...');
-            if (!triedFallback) {
-              setTriedFallback(true);
-              setSourceUri(FALLBACK_VIDEO_URI);
-            }
+            setLoadError('No se pudo cargar el video. Verifica tu conexión e inténtalo nuevamente.');
           }}
           onPlaybackStatusUpdate={onStatusUpdate}
           posterSource={{ uri: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1920&auto=format&fit=crop' }}
