@@ -123,24 +123,27 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
           style={{ flex: 1 }}
           testID="comments-backdrop"
         />
-        <KeyboardAvoidingView
-          style={[styles.container, styles.sheet]}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        <Animated.View
+          style={{
+            height: Math.round(screenHeight * 0.75),
+            borderTopLeftRadius: 18,
+            borderTopRightRadius: 18,
+            overflow: 'hidden',
+            opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
+            transform: [
+              {
+                translateY: progress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [Math.round(screenHeight * 0.2), 0],
+                }),
+              },
+            ],
+          }}
+          testID="comments-sheet"
         >
-          <Animated.View
-            style={{
-              flex: 1,
-              opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
-              transform: [
-                {
-                  translateY: progress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [Math.round(screenHeight * 0.2), 0],
-                  }),
-                },
-              ],
-            }}
-            testID="comments-sheet"
+          <KeyboardAvoidingView
+            style={styles.kbContainer}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           >
             <View style={styles.header}>
               <View style={styles.grabberContainer}>
@@ -199,8 +202,8 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
                 <Send color="#0095f6" size={20} />
               </TouchableOpacity>
             </View>
-          </Animated.View>
-        </KeyboardAvoidingView>
+          </KeyboardAvoidingView>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -209,7 +212,7 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: 'transparent',
   },
   modalOverlay: {
     flex: 1,
@@ -221,6 +224,10 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
     overflow: 'hidden',
+  },
+  kbContainer: {
+    flex: 1,
+    backgroundColor: 'transparent',
   },
   header: {
     flexDirection: 'row',
