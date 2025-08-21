@@ -153,6 +153,7 @@ export default function CommentsModal({ visible, onClose, onCountChange }: Comme
             borderTopLeftRadius: 18,
             borderTopRightRadius: 18,
             overflow: 'hidden',
+            backgroundColor: '#1a1a1a',
             opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
             transform: [
               {
@@ -289,7 +290,7 @@ const styles = StyleSheet.create({
   commentsContainer: {
     flex: 1,
     paddingHorizontal: 16,
-    backgroundColor: '#0f0f0f',
+    backgroundColor: '#1a1a1a',
   },
   commentItem: {
     flexDirection: 'row',
@@ -330,7 +331,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#0f0f0f',
+    backgroundColor: '#1a1a1a',
   },
   emojiBar: {
     flexDirection: 'row',
@@ -339,7 +340,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderTopWidth: 1,
     borderTopColor: '#1f1f1f',
-    backgroundColor: '#0f0f0f',
+    backgroundColor: '#1a1a1a',
   },
   emojiBtn: {
     paddingVertical: 6,
@@ -356,7 +357,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: 1,
     borderTopColor: '#1f1f1f',
-    backgroundColor: '#0f0f0f',
+    backgroundColor: '#1a1a1a',
   },
   textInput: {
     flex: 1,
