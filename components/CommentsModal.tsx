@@ -9,11 +9,9 @@ import {
   StyleSheet,
   Dimensions,
   Image,
-
+  KeyboardAvoidingView,
   Platform,
   Animated,
-  Keyboard,
-  KeyboardEvent,
 } from 'react-native';
 import { X, Send } from 'lucide-react-native';
 import { Comment } from '@/types/video';
@@ -36,17 +34,11 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
   const [localVisible, setLocalVisible] = useState<boolean>(visible);
   const overlayOpacity = useRef<Animated.Value>(new Animated.Value(0)).current;
   const translateY = useRef<Animated.Value>(new Animated.Value(Math.round(screenHeight * 0.2))).current;
-  const keyboardTranslate = useRef<Animated.Value>(new Animated.Value(0)).current;
   const isAnimatingRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (visible) {
       if (!localVisible) setLocalVisible(true);
-      try {
-        keyboardTranslate.setValue(0);
-      } catch (e) {
-        console.log('Reset keyboardTranslate on open error', e);
-      }
       Animated.parallel([
         Animated.timing(overlayOpacity, { toValue: 1, duration: ENTER_DURATION, useNativeDriver: true }),
         Animated.timing(translateY, { toValue: 0, duration: ENTER_DURATION, useNativeDriver: true }),
@@ -55,14 +47,6 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
       });
     } else if (localVisible && !isAnimatingRef.current) {
       isAnimatingRef.current = true;
-      try {
-        Keyboard.dismiss();
-      } catch {}
-      try {
-        keyboardTranslate.setValue(0);
-      } catch (e) {
-        console.log('Reset keyboardTranslate on close effect error', e);
-      }
       Animated.parallel([
         Animated.timing(overlayOpacity, { toValue: 0, duration: EXIT_DURATION, useNativeDriver: true }),
         Animated.timing(translateY, { toValue: Math.round(screenHeight * 0.2), duration: EXIT_DURATION, useNativeDriver: true }),
@@ -72,60 +56,12 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
         isAnimatingRef.current = false;
       });
     }
-  }, [visible, localVisible, overlayOpacity, translateY, keyboardTranslate]);
-
-  useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-
-    const onShow = (e: KeyboardEvent) => {
-      try {
-        if (!localVisible) return;
-        const duration = (e.duration ?? 250) as number;
-        const height = e.endCoordinates?.height ?? 0;
-        console.log('Keyboard show', { duration, height });
-        Animated.timing(keyboardTranslate, {
-          toValue: -height,
-          duration,
-          useNativeDriver: true,
-        }).start();
-      } catch (err) {
-        console.log('Keyboard show error', err);
-      }
-    };
-
-    const onHide = (e: KeyboardEvent) => {
-      try {
-        if (!localVisible) return;
-        const duration = (e.duration ?? 200) as number;
-        console.log('Keyboard hide', { duration });
-        Animated.timing(keyboardTranslate, {
-          toValue: 0,
-          duration,
-          useNativeDriver: true,
-        }).start();
-      } catch (err) {
-        console.log('Keyboard hide error', err);
-      }
-    };
-
-    if (Platform.OS !== 'web') {
-      const subShow = Keyboard.addListener(showEvent, onShow);
-      const subHide = Keyboard.addListener(hideEvent, onHide);
-      return () => {
-        subShow.remove();
-        subHide.remove();
-      };
-    }
-    return () => {};
-  }, [keyboardTranslate, localVisible]);
+  }, [visible]);
 
   const handleAnimatedClose = () => {
     try {
       if (!localVisible) return;
       isAnimatingRef.current = true;
-      try { Keyboard.dismiss(); } catch {}
-      try { keyboardTranslate.setValue(0); } catch {}
       Animated.parallel([
         Animated.timing(overlayOpacity, { toValue: 0, duration: EXIT_DURATION, useNativeDriver: true }),
         Animated.timing(translateY, { toValue: Math.round(screenHeight * 0.2), duration: EXIT_DURATION, useNativeDriver: true }),
@@ -170,8 +106,11 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
           style={{ flex: 1 }}
           testID="comments-backdrop"
         />
-        <View style={[styles.container, styles.sheet]}>
-          <Animated.View style={{ flex: 1, transform: [{ translateY: Animated.add(translateY, keyboardTranslate) }] }} testID="comments-sheet">
+        <KeyboardAvoidingView
+          style={[styles.container, styles.sheet]}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <Animated.View style={{ flex: 1, transform: [{ translateY }] }} testID="comments-sheet">
             <View style={styles.header}>
               <Text style={styles.headerTitle}>Comentarios</Text>
               <TouchableOpacity onPress={handleAnimatedClose} style={styles.closeButton} testID="comments-close">
@@ -219,7 +158,7 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
               </TouchableOpacity>
             </View>
           </Animated.View>
-        </View>
+        </KeyboardAvoidingView>
       </Animated.View>
     </Modal>
   );
@@ -236,7 +175,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheet: {
-    height: Math.round(screenHeight * 0.975),
+    height: Math.round(screenHeight * 0.75),
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     overflow: 'hidden',

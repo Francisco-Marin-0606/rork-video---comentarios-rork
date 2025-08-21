@@ -18,20 +18,19 @@ import { mockComments } from '@/mocks/comments';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-import { VideoView, useVideoPlayer } from 'expo-video';
+import { Video, AVPlaybackStatus, ResizeMode, Audio } from 'expo-av';
 
-const FIXED_VIDEO_URI = 'https://firebasestorage.googleapis.com/v0/b/samples-64df5.appspot.com/o/Intro%20a%20la%20hipnosis.mp4?alt=media&token=613551ee-ad60-48ee-b0cc-cf1358956fc1' as const;
+const VIDEO_SOURCE = {
+  uri: 'https://firebasestorage.googleapis.com/v0/b/samples-64df5.appspot.com/o/Intro%20a%20la%20hipnosis.mp4?alt=media&token=613551ee-ad60-48ee-b0cc-cf1358956fc1',
+} as const;
 
 export default function VideoScreen() {
   const router = useRouter();
   const [showCommentsModal, setShowCommentsModal] = useState<boolean>(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [hasUserInteracted, setHasUserInteracted] = useState<boolean>(false);
-  const [sourceUri] = useState<string>(FIXED_VIDEO_URI);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [triedFallback] = useState<boolean>(false);
-  const videoRef = useRef<VideoView | null>(null);
-  const [playbackStatus, setPlaybackStatus] = useState<Record<string, unknown> | null>(null);
+  const videoRef = useRef<Video | null>(null);
+  const [playbackStatus, setPlaybackStatus] = useState<AVPlaybackStatus | null>(null);
 
   const [iconVisible, setIconVisible] = useState<boolean>(false);
   const [commentsCount] = useState<number>(mockComments.length);
@@ -72,7 +71,22 @@ export default function VideoScreen() {
   }, []);
 
   useEffect(() => {
-    console.log('Audio config skipped (expo-video)');
+    const configureAudio = async () => {
+      try {
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          allowsRecordingIOS: false,
+          staysActiveInBackground: false,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+        console.log('Audio mode configured: plays in silent mode on iOS');
+      } catch (e) {
+        console.log('Error configuring audio mode', e);
+      }
+    };
+
+    configureAudio();
   }, []);
 
   useEffect(() => {
@@ -82,36 +96,12 @@ export default function VideoScreen() {
     }
   }, [isPlaying, showPlayPauseIcon]);
 
-  const onStatusUpdate = useCallback((s: Record<string, unknown>) => {
-    try {
-      setPlaybackStatus(s);
-      if (s && typeof s === 'object') {
-        const playing = Boolean((s as any).isPlaying ?? (s as any).playing);
-        setIsPlaying(playing);
-        if (loadError) setLoadError(null);
-      }
-    } catch (e) {
-      console.log('onStatusUpdate error', e);
+  const onStatusUpdate = useCallback((s: AVPlaybackStatus) => {
+    setPlaybackStatus(s);
+    if ('isLoaded' in s && s.isLoaded) {
+      setIsPlaying(s.isPlaying ?? false);
     }
-  }, [loadError]);
-
-  const player = useVideoPlayer(sourceUri, (p) => {
-    try {
-      p.loop = true;
-      p.muted = Platform.OS === 'web' ? !hasUserInteracted : false;
-      if (Platform.OS === 'web') {
-        if (hasUserInteracted) {
-          p.play();
-        } else {
-          p.pause();
-        }
-      } else {
-        p.play();
-      }
-    } catch (e) {
-      console.log('player configure error', e);
-    }
-  });
+  }, []);
 
   const handlePlayPause = async () => {
     try {
@@ -119,12 +109,17 @@ export default function VideoScreen() {
       if (Platform.OS !== 'web') {
         await Haptics.selectionAsync();
       }
-      if (player.playing) {
-        player.pause();
-      } else {
-        player.play();
+      const v = videoRef.current;
+      if (!v) return;
+      const status = await v.getStatusAsync();
+      if ('isLoaded' in status && status.isLoaded) {
+        if (status.isPlaying) {
+          await v.pauseAsync();
+        } else {
+          await v.playAsync();
+        }
+        showPlayPauseIcon();
       }
-      showPlayPauseIcon();
     } catch (e) {
       console.log('handlePlayPause error', e);
     }
@@ -135,15 +130,14 @@ export default function VideoScreen() {
       if (Platform.OS !== 'web') {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
-      const pos = player.currentTime ?? 0;
-      const next = Math.max(0, pos + deltaSeconds);
-      const anyP = player as unknown as { seek?: (t: number) => void; seekTo?: (t: number) => void; currentTime?: number };
-      if (typeof anyP.seek === 'function') {
-        anyP.seek(next);
-      } else if (typeof anyP.seekTo === 'function') {
-        anyP.seekTo(next);
-      } else {
-        (player as unknown as { currentTime?: number }).currentTime = next;
+      const v = videoRef.current;
+      if (!v) return;
+      const status = await v.getStatusAsync();
+      if ('isLoaded' in status && status.isLoaded) {
+        const duration = status.durationMillis ?? 0;
+        const current = status.positionMillis ?? 0;
+        const next = Math.max(0, Math.min(duration, current + deltaSeconds * 1000));
+        await v.setPositionAsync(next);
       }
     } catch (e) {
       console.log('Seek error', e);
@@ -155,7 +149,8 @@ export default function VideoScreen() {
       if (Platform.OS !== 'web') {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
-      player.pause();
+      const v = videoRef.current;
+      await v?.pauseAsync?.();
       setIsPlaying(false);
     } catch {}
     router.replace('/+not-found');
@@ -170,11 +165,11 @@ export default function VideoScreen() {
 
   const remainingLabel = React.useMemo(() => {
     try {
-      const s = playbackStatus as any;
-      if (s) {
-        const durationMs = (s.durationMillis ?? (s.duration != null ? s.duration * 1000 : 0)) as number;
-        const positionMs = (s.positionMillis ?? (s.currentTime != null ? s.currentTime * 1000 : 0)) as number;
-        const remaining = Math.max(0, durationMs - positionMs);
+      const s = playbackStatus;
+      if (s && 'isLoaded' in s && s.isLoaded) {
+        const duration = s.durationMillis ?? 0;
+        const position = s.positionMillis ?? 0;
+        const remaining = Math.max(0, duration - position);
         const totalSeconds = Math.floor(remaining / 1000);
         const m = Math.floor(totalSeconds / 60);
         const sLeft = totalSeconds % 60;
@@ -196,14 +191,16 @@ export default function VideoScreen() {
         activeOpacity={1}
         onPress={handlePlayPause}
       >
-        <VideoView
-          ref={(r: VideoView | null) => { videoRef.current = r; }}
+        <Video
+          ref={(r) => { videoRef.current = r; }}
           style={styles.video}
-          player={player}
-          allowsFullscreen={false}
-          allowsPictureInPicture={false}
-          nativeControls={false}
-          contentFit="cover"
+          source={VIDEO_SOURCE}
+          resizeMode={ResizeMode.COVER}
+          shouldPlay
+          isMuted={Platform.OS === 'web'}
+          isLooping
+          useNativeControls={false}
+          onPlaybackStatusUpdate={onStatusUpdate}
         />
 
         <View style={styles.centerOverlay} pointerEvents="none">
@@ -217,11 +214,8 @@ export default function VideoScreen() {
               resizeMode="contain"
             />
           )}
-          {!hasUserInteracted && (
-            <Text style={styles.tapToPlayText}>{Platform.OS === 'web' ? 'Toca para reproducir (autoplay desactivado en web)' : 'Toca para reproducir'}</Text>
-          )}
-          {!!loadError && (
-            <Text style={styles.errorText}>{loadError}</Text>
+          {!hasUserInteracted && !isPlaying && (
+            <Text style={styles.tapToPlayText}>Toca para reproducir</Text>
           )}
         </View>
       </TouchableOpacity>
