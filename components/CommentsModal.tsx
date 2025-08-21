@@ -163,14 +163,14 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
+      onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponderCapture: (_: GestureResponderEvent, g) => {
-        const start = Math.abs(g.dy) > 6 && Math.abs(g.dx) < 24 && g.dy > 0;
+        const start = Math.abs(g.dy) > 2 && Math.abs(g.dx) < 24 && g.dy > 0;
         if (start) console.log('CommentsModal header swipe start (capture)');
         return start;
       },
       onMoveShouldSetPanResponder: (_: GestureResponderEvent, g) => {
-        const start = Math.abs(g.dy) > 6 && Math.abs(g.dx) < 24 && g.dy > 0;
+        const start = Math.abs(g.dy) > 2 && Math.abs(g.dx) < 24 && g.dy > 0;
         if (start) console.log('CommentsModal header swipe start');
         return start;
       },
@@ -184,7 +184,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
       },
       onPanResponderRelease: (_: GestureResponderEvent, g) => {
         isDraggingRef.current = false;
-        const shouldClose = g.dy > 64 || g.vy > 0.8;
+        const shouldClose = g.dy > 32 || g.vy > 0.35;
         console.log('CommentsModal header swipe release', { dy: g.dy, vy: g.vy, shouldClose });
         if (shouldClose) {
           handleAnimatedClose();
@@ -243,7 +243,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
             behavior={undefined}
             keyboardVerticalOffset={0}
           >
-            <View style={styles.header} {...panResponder.panHandlers}>
+            <View style={styles.header} {...panResponder.panHandlers} testID="comments-header">
               <View style={styles.grabberContainer}>
                 <View style={styles.grabber} />
               </View>
