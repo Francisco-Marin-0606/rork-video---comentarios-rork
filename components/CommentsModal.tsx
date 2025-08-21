@@ -14,6 +14,7 @@ import {
   Keyboard,
   PanResponder,
   GestureResponderEvent,
+  PanResponderGestureState,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowUp, X } from 'lucide-react-native';
@@ -44,8 +45,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
   const [localVisible, setLocalVisible] = useState<boolean>(visible);
   const progress = useRef<Animated.Value>(new Animated.Value(0)).current;
   const isAnimatingRef = useRef<boolean>(false);
-  const dragY = useRef<Animated.Value>(new Animated.Value(0)).current;
-  const isDraggingRef = useRef<boolean>(false);
+  const gestureStartTSRef = useRef<number>(0);
 
   useEffect(() => {
     if (visible) {
@@ -76,7 +76,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
       isAnimatingRef.current = true;
       Animated.parallel([
         Animated.timing(progress, { toValue: 0, duration: EXIT_DURATION, useNativeDriver: true }),
-        Animated.timing(dragY, { toValue: 0, duration: EXIT_DURATION, useNativeDriver: true }),
+        // no drag animation when closing
       ]).start(({ finished }) => {
         console.log('CommentsModal manual exit finished', finished);
         setLocalVisible(false);
@@ -163,40 +163,38 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponderCapture: (_: GestureResponderEvent, g) => {
-        const start = g.dy > 1 && Math.abs(g.dx) < 32;
-        if (start) console.log('CommentsModal header swipe start (capture)');
-        return start;
-      },
-      onMoveShouldSetPanResponder: (_: GestureResponderEvent, g) => {
-        const start = g.dy > 1 && Math.abs(g.dx) < 32;
+      onStartShouldSetPanResponder: (_: GestureResponderEvent, g: PanResponderGestureState) => {
+        const start = g.dy > 0 && Math.abs(g.dx) < 24;
         if (start) console.log('CommentsModal header swipe start');
         return start;
       },
+      onMoveShouldSetPanResponderCapture: (_: GestureResponderEvent, g: PanResponderGestureState) => {
+        const start = g.dy > 0 && Math.abs(g.dx) < 24;
+        if (start) console.log('CommentsModal header swipe start (capture)');
+        return start;
+      },
+      onMoveShouldSetPanResponder: (_: GestureResponderEvent, g: PanResponderGestureState) => {
+        const start = g.dy > 0 && Math.abs(g.dx) < 24;
+        return start;
+      },
       onPanResponderGrant: () => {
-        isDraggingRef.current = true;
-        dragY.setValue(0);
+        gestureStartTSRef.current = Date.now();
       },
-      onPanResponderMove: (_: GestureResponderEvent, g) => {
-        const y = g.dy > 0 ? g.dy : 0;
-        dragY.setValue(y);
+      onPanResponderMove: () => {
+        // no visual drag, we only detect a quick short swipe
       },
-      onPanResponderRelease: (_: GestureResponderEvent, g) => {
-        isDraggingRef.current = false;
-        const fastShort = g.vy > 0.6 && g.dy > 8;
-        const longPull = g.dy > 24;
+      onPanResponderRelease: (_: GestureResponderEvent, g: PanResponderGestureState) => {
+        const durationMs = Date.now() - (gestureStartTSRef.current || Date.now());
+        const fastShort = g.vy > 0.9 && g.dy > 6 && durationMs < 220;
+        const longPull = g.dy > 36; // fallback if user drags a bit more
         const shouldClose = fastShort || longPull;
-        console.log('CommentsModal header swipe release', { dy: g.dy, vy: g.vy, shouldClose });
+        console.log('CommentsModal header swipe release', { dy: g.dy, vy: g.vy, durationMs, shouldClose });
         if (shouldClose) {
           handleAnimatedClose();
-        } else {
-          Animated.timing(dragY, { toValue: 0, duration: 120, useNativeDriver: true }).start();
         }
       },
       onPanResponderTerminate: () => {
-        isDraggingRef.current = false;
-        Animated.timing(dragY, { toValue: 0, duration: 160, useNativeDriver: true }).start();
+        // do nothing
       },
     })
   ).current;
@@ -235,7 +233,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
                   outputRange: [offscreenTranslate, 0],
                 }),
               },
-              { translateY: dragY },
+              // no drag follow; close only on quick swipe
             ],
           }}
           testID="comments-sheet"
