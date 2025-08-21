@@ -35,40 +35,30 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
   const EXIT_DURATION = 240;
 
   const [localVisible, setLocalVisible] = useState<boolean>(visible);
-  const overlayOpacity = useRef<Animated.Value>(new Animated.Value(0)).current;
-  const translateY = useRef<Animated.Value>(new Animated.Value(Math.round(screenHeight * 0.2))).current;
+  const progress = useRef<Animated.Value>(new Animated.Value(0)).current;
   const isAnimatingRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (visible) {
       if (!localVisible) setLocalVisible(true);
-      Animated.parallel([
-        Animated.timing(overlayOpacity, { toValue: 1, duration: ENTER_DURATION, useNativeDriver: true }),
-        Animated.timing(translateY, { toValue: 0, duration: ENTER_DURATION, useNativeDriver: true }),
-      ]).start(({ finished }) => {
+      Animated.timing(progress, { toValue: 1, duration: ENTER_DURATION, useNativeDriver: true }).start(({ finished }) => {
         console.log('CommentsModal enter finished', finished);
       });
     } else if (localVisible && !isAnimatingRef.current) {
       isAnimatingRef.current = true;
-      Animated.parallel([
-        Animated.timing(overlayOpacity, { toValue: 0, duration: EXIT_DURATION, useNativeDriver: true }),
-        Animated.timing(translateY, { toValue: Math.round(screenHeight * 0.2), duration: EXIT_DURATION, useNativeDriver: true }),
-      ]).start(({ finished }) => {
+      Animated.timing(progress, { toValue: 0, duration: EXIT_DURATION, useNativeDriver: true }).start(({ finished }) => {
         console.log('CommentsModal exit finished', finished);
         setLocalVisible(false);
         isAnimatingRef.current = false;
       });
     }
-  }, [visible]);
+  }, [visible, localVisible, progress]);
 
   const handleAnimatedClose = () => {
     try {
       if (!localVisible) return;
       isAnimatingRef.current = true;
-      Animated.parallel([
-        Animated.timing(overlayOpacity, { toValue: 0, duration: EXIT_DURATION, useNativeDriver: true }),
-        Animated.timing(translateY, { toValue: Math.round(screenHeight * 0.2), duration: EXIT_DURATION, useNativeDriver: true }),
-      ]).start(({ finished }) => {
+      Animated.timing(progress, { toValue: 0, duration: EXIT_DURATION, useNativeDriver: true }).start(({ finished }) => {
         console.log('CommentsModal manual exit finished', finished);
         setLocalVisible(false);
         isAnimatingRef.current = false;
@@ -125,7 +115,7 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
       transparent
       onRequestClose={handleAnimatedClose}
     >
-      <Animated.View style={[styles.modalOverlay, { opacity: overlayOpacity }]} testID="comments-overlay">
+      <View style={styles.modalOverlay} testID="comments-overlay">
         <TouchableOpacity
           accessibilityRole="button"
           activeOpacity={1}
@@ -137,7 +127,21 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
           style={[styles.container, styles.sheet]}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <Animated.View style={{ flex: 1, transform: [{ translateY }] }} testID="comments-sheet">
+          <Animated.View
+            style={{
+              flex: 1,
+              opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
+              transform: [
+                {
+                  translateY: progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [Math.round(screenHeight * 0.2), 0],
+                  }),
+                },
+              ],
+            }}
+            testID="comments-sheet"
+          >
             <View style={styles.header}>
               <View style={styles.grabberContainer}>
                 <View style={styles.grabber} />
@@ -197,7 +201,7 @@ export default function CommentsModal({ visible, onClose }: CommentsModalProps) 
             </View>
           </Animated.View>
         </KeyboardAvoidingView>
-      </Animated.View>
+      </View>
     </Modal>
   );
 }
