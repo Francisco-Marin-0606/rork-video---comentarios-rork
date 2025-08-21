@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   TextInput,
   StyleSheet,
   Dimensions,
-  Image,
   KeyboardAvoidingView,
   Platform,
   Animated,
@@ -129,7 +128,7 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
         username: 'tu_usuario',
         text: newComment.trim(),
         timestamp: 'ahora',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face',
+        avatar: '',
       };
       setComments([comment, ...comments]);
       setNewComment('');
@@ -190,7 +189,6 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
             >
               {comments.map((comment) => (
                 <View key={comment.id} style={styles.commentItem}>
-                  <Image source={{ uri: comment.avatar }} style={styles.avatar} />
                   <View style={styles.commentContent}>
                     <View style={styles.commentHeader}>
                       <Text style={styles.username}>{comment.username}</Text>
@@ -301,12 +299,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'flex-start',
   },
-  avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginRight: 12,
-  },
+
   commentContent: {
     flex: 1,
   },
