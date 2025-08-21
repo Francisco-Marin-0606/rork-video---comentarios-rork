@@ -8,6 +8,7 @@ import {
   Platform,
   Image,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SkipForward, MessageCircle, RotateCcw, RotateCw } from 'lucide-react-native';
@@ -30,6 +31,8 @@ export default function VideoScreen() {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const videoRef = useRef<Video | null>(null);
   const [playbackStatus, setPlaybackStatus] = useState<AVPlaybackStatus | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isBuffering, setIsBuffering] = useState<boolean>(false);
 
   const [iconVisible, setIconVisible] = useState<boolean>(false);
   const [commentsCount, setCommentsCount] = useState<number>(mockComments.length);
@@ -99,6 +102,8 @@ export default function VideoScreen() {
     setPlaybackStatus(s);
     if ('isLoaded' in s && s.isLoaded) {
       setIsPlaying(s.isPlaying ?? false);
+      setIsLoading(false);
+      setIsBuffering(s.isBuffering ?? false);
     }
   }, []);
 
@@ -199,15 +204,18 @@ export default function VideoScreen() {
           isLooping
           useNativeControls={false}
           progressUpdateIntervalMillis={250}
-          usePoster
-          posterSource={{ uri: 'https://images.unsplash.com/photo-1522199710521-72d69614c702?w=640&q=20' }}
-          onLoadStart={() => { console.log('Video load start'); }}
-          onLoad={() => { console.log('Video loaded'); }}
+          onLoadStart={() => { setIsLoading(true); console.log('Video load start'); }}
+          onLoad={() => { setIsLoading(false); console.log('Video loaded'); }}
           onPlaybackStatusUpdate={onStatusUpdate}
         />
 
         <View style={styles.centerOverlay} pointerEvents="none">
-          {iconVisible && (
+          {(isLoading || isBuffering) && (
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator testID="video-loading" color="#fff" size="large" />
+            </View>
+          )}
+          {iconVisible && !isLoading && !isBuffering && (
             <Animated.Image
               testID={isPlaying ? 'pause-icon' : 'play-icon'}
               source={{ uri: isPlaying
@@ -328,6 +336,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'transparent',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   playPauseIcon: {
     width: 72,
