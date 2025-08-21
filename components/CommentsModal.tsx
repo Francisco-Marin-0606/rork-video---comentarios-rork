@@ -14,7 +14,7 @@ import {
   Animated,
   Keyboard,
 } from 'react-native';
-import { X, Send } from 'lucide-react-native';
+import { X, ArrowUp } from 'lucide-react-native';
 import { Comment } from '@/types/video';
 import { mockComments } from '@/mocks/comments';
 
@@ -220,7 +220,8 @@ export default function CommentsModal({ visible, onClose, onCountChange }: Comme
                 <TextInput
                   style={styles.textInput}
                   placeholder="¿Qué opinas sobre esto?"
-                  placeholderTextColor="#666"
+                  placeholderTextColor="#9aa0a6"
+                  selectionColor="#5b7cfa"
                   value={newComment}
                   onChangeText={setNewComment}
                   multiline
@@ -229,11 +230,11 @@ export default function CommentsModal({ visible, onClose, onCountChange }: Comme
                 />
                 <TouchableOpacity
                   onPress={handleAddComment}
-                  style={[styles.sendButton, { opacity: newComment.trim() ? 1 : 0.5 }]}
+                  style={[styles.sendButton, { opacity: newComment.trim() ? 1 : 0.6 }]}
                   disabled={!newComment.trim()}
                   testID="comments-send"
                 >
-                  <Send color="#0095f6" size={20} />
+                  <ArrowUp color="#ffffff" size={20} />
                 </TouchableOpacity>
               </View>
             </Animated.View>
@@ -361,19 +362,24 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 22,
+    backgroundColor: '#222427',
+    borderRadius: 28,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#2f3236',
     color: '#fff',
     fontSize: 14,
     maxHeight: 100,
     marginRight: 12,
   },
   sendButton: {
-    padding: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    borderRadius: 999,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF7A00',
+    borderRadius: 20,
   },
   grabberContainer: {
     position: 'absolute',
