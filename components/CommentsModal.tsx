@@ -184,11 +184,18 @@ useEffect(() => {
       statusBarTranslucent
       onRequestClose={handleAnimatedClose}
     >
-      <View style={styles.modalOverlay}>
+      <View style={[
+        styles.modalOverlay,
+        Platform.OS === 'android' ? { height: Dimensions.get('screen').height } : null
+      ]}>
         <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={handleAnimatedClose} />
         <Animated.View
           style={[
             {
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
               height: sheetHeight,
               borderTopLeftRadius: 28,
               borderTopRightRadius: 28,
@@ -198,7 +205,7 @@ useEffect(() => {
             sheetStyle,
           ]}
         >
-          <KeyboardAvoidingView style={styles.kbContainer} behavior={undefined} keyboardVerticalOffset={0}>
+          <KeyboardAvoidingView style={styles.kbContainer} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
             {/* HEADER */}
             <View style={styles.header}>
               {/* Overlay capturador del gesto, no tapa el botón X */}
