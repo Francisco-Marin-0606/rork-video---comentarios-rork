@@ -297,7 +297,7 @@ useEffect(() => {
             <View
               style={[
                 styles.bottomBarContainer,
-                { bottom: keyboardHeight, paddingBottom: (isKeyboardVisible ? 12 : 12 + (insets?.bottom ?? 0)) },
+                { bottom: keyboardHeight, paddingBottom: (isKeyboardVisible ? (Platform.OS === 'android' ? 6 : 12) : (Platform.OS === 'android' ? 6 : 12) + (insets?.bottom ?? 0)) },
               ]}
             >
               <View style={styles.inputContainer}>
@@ -345,8 +345,8 @@ const styles = StyleSheet.create({
   timestamp: { color: '#666', fontSize: 12 },
   commentText: { color: '#fff', fontSize: 14, lineHeight: 18 },
   bottomBarContainer: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: '#1a1a1a', zIndex: 3, elevation: 3 },
-  inputContainer: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: '#1f1f1f', backgroundColor: '#1a1a1a' },
-  textInput: { flex: 1, backgroundColor: '#222427', borderRadius: 28, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: '#2f3236', color: '#fff', fontSize: 14, maxHeight: 100, marginRight: 12 },
+  inputContainer: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 16, paddingVertical: Platform.OS === 'android' ? 8 : 12, borderTopWidth: 1, borderTopColor: '#1f1f1f', backgroundColor: '#1a1a1a' },
+  textInput: { flex: 1, backgroundColor: '#222427', borderRadius: Platform.OS === 'android' ? 24 : 28, paddingHorizontal: 16, paddingVertical: Platform.OS === 'android' ? 8 : 12, borderWidth: 1, borderColor: '#2f3236', color: '#fff', fontSize: 14, maxHeight: 100, marginRight: Platform.OS === 'android' ? 8 : 12 },
   sendButton: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FF7A00', borderRadius: 20 },
   grabberContainer: { position: 'absolute', top: 6, left: 0, right: 0, alignItems: 'center' },
   grabber: { width: 44, height: 4, borderRadius: 2, backgroundColor: '#2a2a2a' },
