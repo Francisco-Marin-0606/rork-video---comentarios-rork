@@ -38,6 +38,15 @@ export default function CommentsModal({
   const [scrollEnabled, setScrollEnabled] = useState<boolean>(true);
   const scrollRef = useRef<ScrollView | null>(null);
 
+  const effectiveKeyboardHeight = useMemo(() => {
+    const bottomInset = insets?.bottom ?? 0;
+    if (Platform.OS === 'android') {
+      const effective = Math.max(0, keyboardHeight - bottomInset);
+      return effective;
+    }
+    return keyboardHeight;
+  }, [keyboardHeight, insets?.bottom]);
+
   const ENTER_DURATION = 280;
   const EXIT_DURATION = 240;
 
@@ -228,7 +237,7 @@ useEffect(() => {
             <ScrollView
               ref={(r) => { scrollRef.current = r; }}
               style={styles.commentsContainer}
-              contentContainerStyle={{ paddingBottom: 96 + keyboardHeight + (insets?.bottom ?? 0) }}
+              contentContainerStyle={{ paddingBottom: 96 + effectiveKeyboardHeight + (!isKeyboardVisible ? (insets?.bottom ?? 0) : 0) }}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
               scrollEventThrottle={16}
@@ -287,7 +296,7 @@ useEffect(() => {
               style={{
                 position: 'absolute',
                 left: 0, right: 0, bottom: 0,
-                height: keyboardHeight + (isKeyboardVisible ? 0 : (insets?.bottom ?? 0)),
+                height: effectiveKeyboardHeight + (isKeyboardVisible ? 0 : (insets?.bottom ?? 0)),
                 backgroundColor: '#1a1a1a',
               }}
               pointerEvents="none"
@@ -297,7 +306,7 @@ useEffect(() => {
             <View
               style={[
                 styles.bottomBarContainer,
-                { bottom: keyboardHeight, paddingBottom: (isKeyboardVisible ? (Platform.OS === 'android' ? 6 : 12) : (Platform.OS === 'android' ? 6 : 12) + (insets?.bottom ?? 0)) },
+                { bottom: effectiveKeyboardHeight, paddingBottom: (isKeyboardVisible ? (Platform.OS === 'android' ? 6 : 12) : (Platform.OS === 'android' ? 6 : 12) + (insets?.bottom ?? 0)) },
               ]}
             >
               <View style={styles.inputContainer}>
