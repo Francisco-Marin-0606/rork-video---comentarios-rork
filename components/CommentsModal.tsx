@@ -205,7 +205,7 @@ useEffect(() => {
             sheetStyle,
           ]}
         >
-          <KeyboardAvoidingView style={styles.kbContainer} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'android' ? -Dimensions.get('screen').height + Dimensions.get('window').height : 0}>
+          <KeyboardAvoidingView style={styles.kbContainer} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             {/* HEADER */}
             <View style={styles.header}>
               {/* Overlay capturador del gesto, no tapa el botón X */}
