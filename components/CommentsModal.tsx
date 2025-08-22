@@ -46,7 +46,7 @@ export default function CommentsModal({
   const openProgress = useSharedValue(0); // 0: oculto, 1: visible
   const dragY = useSharedValue(0);        // seguimiento del drag
 
-  const sheetHeight = Math.round(screenHeight * (isKeyboardVisible ? 0.9 : 0.75));
+  const sheetHeight = Math.round(screenHeight * 0.75);
   const offscreenTranslate = sheetHeight + (insets?.bottom ?? 0);
 
 // reportar altura del área superior para encajar el video
