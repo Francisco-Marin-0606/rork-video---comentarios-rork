@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { Dimensions, Platform } from "react-native";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -22,9 +23,16 @@ export default function RootLayout() {
     SplashScreen.hideAsync();
   }, []);
 
+  const screenH = Dimensions.get('screen').height;
+
   return (
     <QueryClientProvider client={queryClient}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView
+        style={{
+          flex: 1,
+          ...(Platform.OS === 'android' ? { height: screenH } : null),
+        }}
+      >
         <RootLayoutNav />
       </GestureHandlerRootView>
     </QueryClientProvider>

@@ -205,7 +205,7 @@ useEffect(() => {
             sheetStyle,
           ]}
         >
-          <KeyboardAvoidingView style={styles.kbContainer} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
+          <KeyboardAvoidingView style={styles.kbContainer} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'android' ? -Dimensions.get('screen').height + Dimensions.get('window').height : 0}>
             {/* HEADER */}
             <View style={styles.header}>
               {/* Overlay capturador del gesto, no tapa el botón X */}
@@ -245,6 +245,7 @@ useEffect(() => {
               alwaysBounceVertical={false}
               contentInsetAdjustmentBehavior="never"
               scrollEnabled={scrollEnabled}
+              testID="comments-scrollview"
               onScrollBeginDrag={(e) => {
                 const y = (e?.nativeEvent?.contentOffset?.y as number) ?? 0;
                 lastScrollYRef.current = y;
@@ -275,7 +276,6 @@ useEffect(() => {
                 }
                 lastScrollYRef.current = y;
               }}
-              testID="comments-scroll"
             >
               {comments.map((c) => (
                 <View key={c.id} style={styles.commentItem}>
@@ -312,6 +312,7 @@ useEffect(() => {
                     : (isKeyboardVisible ? 12 : 12 + (insets?.bottom ?? 0)),
                 },
               ]}
+              testID="comments-input-bar"
             >
               <View style={styles.inputContainer}>
                 <TextInput
