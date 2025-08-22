@@ -328,15 +328,16 @@ export default function VideoScreen() {
             const status = await v.getStatusAsync();
             if ('isLoaded' in status && status.isLoaded) {
               if (vis) {
-                await v.pauseAsync();
-                console.log('Video paused on keyboard open');
+                console.log('Keyboard open: keep video playing and visible');
+                if (!status.isPlaying) {
+                  try { await v.playAsync(); } catch {}
+                }
               } else {
-                await v.playAsync();
-                console.log('Video resumed on keyboard close');
+                console.log('Keyboard closed: continue normal playback');
               }
             }
           } catch (e) {
-            console.log('onKeyboardChange video pause/resume error', e);
+            console.log('onKeyboardChange handler error', e);
           }
         }}
       />

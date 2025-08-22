@@ -45,7 +45,9 @@ export default function CommentsModal({
   const openProgress = useSharedValue(0); // 0: oculto, 1: visible
   const dragY = useSharedValue(0);        // seguimiento del drag
 
-  const sheetHeight = Math.round(screenHeight * (isKeyboardVisible ? 0.9 : 0.75));
+  const baseHeight = Math.round(screenHeight * 0.75);
+  const computedHeight = Math.round(screenHeight - keyboardHeight - Math.max(60, (insets?.bottom ?? 0)));
+  const sheetHeight = Math.max(260, Math.min(baseHeight, computedHeight));
   const offscreenTranslate = sheetHeight + (insets?.bottom ?? 0);
 
   // abrir/cerrar por prop
