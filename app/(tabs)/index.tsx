@@ -291,7 +291,7 @@ export default function VideoScreen() {
         </View>
       </TouchableOpacity>
 
-      <View style={styles.controlsRow}>
+      <View style={[styles.controlsRow, Platform.OS === 'android' ? { bottom: 72 } : null]}>
         <TouchableOpacity
           testID="seek-back-15"
           style={styles.controlInline}
