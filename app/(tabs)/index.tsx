@@ -242,10 +242,8 @@ export default function VideoScreen() {
     extrapolate: 'clamp',
   });
 
-  const androidScreenH = Platform.OS === 'android' ? Dimensions.get('screen').height : undefined;
-
   return (
-    <View style={[styles.container, Platform.OS === 'android' ? { height: androidScreenH } : null]}>
+    <View style={styles.container}>
       <StatusBar style="light" />
 
       <TouchableOpacity
