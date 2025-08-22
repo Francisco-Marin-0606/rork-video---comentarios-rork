@@ -31,6 +31,8 @@ export default function CommentsModal({
   const [isKeyboardVisible, setIsKeyboardVisible] = useState<boolean>(false);
   const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
   const lastKbHeightRef = useRef<number>(0);
+  const lastScrollYRef = useRef<number>(0);
+  const pullDownAccumRef = useRef<number>(0);
 
   const ENTER_DURATION = 280;
   const EXIT_DURATION = 240;
@@ -214,6 +216,32 @@ export default function CommentsModal({
               contentContainerStyle={{ paddingBottom: 96 + keyboardHeight + (insets?.bottom ?? 0) }}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
+              scrollEventThrottle={16}
+              bounces
+              overScrollMode="always"
+              onScrollBeginDrag={(e) => {
+                const y = (e?.nativeEvent?.contentOffset?.y as number) ?? 0;
+                lastScrollYRef.current = y;
+                pullDownAccumRef.current = 0;
+                console.log('comments onScrollBeginDrag', { y });
+              }}
+              onScroll={(e) => {
+                const y = (e?.nativeEvent?.contentOffset?.y as number) ?? 0;
+                const dy = y - lastScrollYRef.current;
+                // Acumular sólo cuando estamos en el tope y el usuario tira hacia abajo
+                if (y <= 0 && dy < 0) {
+                  pullDownAccumRef.current += -dy;
+                } else if (y > 0) {
+                  pullDownAccumRef.current = 0;
+                }
+                if (pullDownAccumRef.current >= 28) {
+                  console.log('comments pull-to-close', { accum: pullDownAccumRef.current, y, dy });
+                  pullDownAccumRef.current = 0;
+                  handleAnimatedClose();
+                }
+                lastScrollYRef.current = y;
+              }}
+              testID="comments-scroll"
             >
               {comments.map((c) => (
                 <View key={c.id} style={styles.commentItem}>
