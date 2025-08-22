@@ -34,6 +34,7 @@ export default function VideoScreen() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isBuffering, setIsBuffering] = useState<boolean>(false);
   const [spinnerVisible, setSpinnerVisible] = useState<boolean>(false);
+  const hasNavigatedRef = useRef<boolean>(false);
 
   const [iconVisible, setIconVisible] = useState<boolean>(false);
   const [commentsCount, setCommentsCount] = useState<number>(mockComments.length);
@@ -101,14 +102,30 @@ export default function VideoScreen() {
     }
   }, [isPlaying, showPlayPauseIcon]);
 
+  const goToNextScreen = useCallback(async () => {
+    try {
+      if (hasNavigatedRef.current) return;
+      hasNavigatedRef.current = true;
+      const v = videoRef.current;
+      try { await v?.pauseAsync?.(); } catch {}
+      router.replace('/+not-found');
+    } catch (e) {
+      console.log('goToNextScreen error', e);
+    }
+  }, [router]);
+
   const onStatusUpdate = useCallback((s: AVPlaybackStatus) => {
     setPlaybackStatus(s);
     if ('isLoaded' in s && s.isLoaded) {
       setIsPlaying(s.isPlaying ?? false);
       setIsLoading(false);
       setIsBuffering(s.isBuffering ?? false);
+      if (s.didJustFinish) {
+        console.log('Video finished, navigating to next screen');
+        goToNextScreen();
+      }
     }
-  }, []);
+  }, [goToNextScreen]);
 
   const handlePlayPause = async () => {
     try {
@@ -218,11 +235,11 @@ export default function VideoScreen() {
           resizeMode={ResizeMode.COVER}
           shouldPlay
           isMuted={Platform.OS === 'web'}
-          isLooping
+          isLooping={false}
           useNativeControls={false}
           progressUpdateIntervalMillis={250}
           onLoadStart={() => { setIsLoading(true); console.log('Video load start'); }}
-          onLoad={() => { setIsLoading(false); console.log('Video loaded'); }}
+          onLoad={() => { setIsLoading(false); hasNavigatedRef.current = false; console.log('Video loaded'); }}
           onPlaybackStatusUpdate={onStatusUpdate}
         />
 
