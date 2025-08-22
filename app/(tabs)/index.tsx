@@ -22,7 +22,7 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 import { Video, AVPlaybackStatus, ResizeMode, Audio } from 'expo-av';
 
 const VIDEO_SOURCE = {
-  uri: 'https://firebasestorage.googleapis.com/v0/b/mental-portals.firebasestorage.app/o/Intro%20a%20la%20hipnosis.mp4?alt=media&token=7ab01077-7d4e-42f7-95b1-ed87eae06f8e',
+  uri: 'https://mental-app-images.nyc3.cdn.digitaloceanspaces.com/Videos%20Intro/Intro%20a%20la%20hipnosis.mp4',
 } as const;
 
 export default function VideoScreen() {
