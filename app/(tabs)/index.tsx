@@ -224,15 +224,21 @@ export default function VideoScreen() {
 
       <TouchableOpacity
         testID="video-touch-surface"
-        style={styles.videoContainer}
+        style={[
+          styles.videoContainer,
+          showCommentsModal ? { justifyContent: 'flex-start', alignItems: 'center' } : null,
+        ]}
         activeOpacity={1}
         onPress={handlePlayPause}
       >
         <Video
           ref={(r) => { videoRef.current = r; }}
-          style={styles.video}
+          style={[
+            styles.video,
+            { height: showCommentsModal ? Math.round(screenHeight * 0.8) : screenHeight },
+          ]}
           source={VIDEO_SOURCE}
-          resizeMode={ResizeMode.COVER}
+          resizeMode={showCommentsModal ? ResizeMode.CONTAIN : ResizeMode.COVER}
           shouldPlay
           isMuted={Platform.OS === 'web'}
           isLooping={false}
@@ -355,8 +361,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   video: {
-    width: screenWidth,
-    height: screenHeight,
+    width: '100%',
+    backgroundColor: '#000',
     position: 'absolute',
     top: 0,
     left: 0,
