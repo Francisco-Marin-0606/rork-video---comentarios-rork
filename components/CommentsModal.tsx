@@ -34,6 +34,7 @@ export default function CommentsModal({
   const lastScrollYRef = useRef<number>(0);
   const pullDownAccumRef = useRef<number>(0);
   const [scrollEnabled, setScrollEnabled] = useState<boolean>(true);
+  const scrollRef = useRef<ScrollView | null>(null);
 
   const ENTER_DURATION = 280;
   const EXIT_DURATION = 240;
@@ -57,9 +58,9 @@ export default function CommentsModal({
         if (finished) runOnJS(setLocalVisible)(false);
       });
     }
-  }, [visible]); // eslint-disable-line
+  }, [visible]);
 
-  // teclado (igual que tenías, simplificado)
+  // teclado
   useEffect(() => {
     const isIOS = Platform.OS === 'ios';
 
@@ -67,7 +68,6 @@ export default function CommentsModal({
       const changeSub = Keyboard.addListener('keyboardWillChangeFrame', (e: any) => {
         const screenY = typeof e?.endCoordinates?.screenY === 'number' ? e.endCoordinates.screenY : screenHeight;
         const nextHeight = Math.max(0, screenHeight - screenY);
-        const duration = typeof e?.duration === 'number' ? e.duration : 250;
         const becameVisible = nextHeight > 0;
         if (lastKbHeightRef.current === nextHeight) return;
         lastKbHeightRef.current = nextHeight;
@@ -128,14 +128,13 @@ export default function CommentsModal({
         dragY.value = 0;
       })
       .onUpdate((e) => {
-        // solo seguir hacia abajo
         if (e.translationY > 0) {
           dragY.value = e.translationY;
         }
       })
       .onEnd((e) => {
-        const fastShort = e.velocityY > 1200 && e.translationY >= 4; // “flick” corto
-        const longPull = e.translationY > 80;                         // tirón lento
+        const fastShort = e.velocityY > 1200 && e.translationY >= 4;
+        const longPull = e.translationY > 80;
         if (fastShort || longPull) {
           runOnJS(handleAnimatedClose)();
         } else {
@@ -143,16 +142,14 @@ export default function CommentsModal({
         }
       })
       .onFinalize(() => {
-        // si otro gesto interrumpe, devolver
         if (openProgress.value === 1) {
           dragY.value = withSpring(0, { damping: 18, stiffness: 220 });
         }
       });
-  }, [isKeyboardVisible]); // eslint-disable-line
+  }, [isKeyboardVisible]);
 
   // --- estilo animado del sheet
   const sheetStyle = useAnimatedStyle(() => {
-    // translate base por apertura
     const base = offscreenTranslate * (1 - openProgress.value);
     return {
       transform: [{ translateY: base + dragY.value }],
@@ -213,6 +210,7 @@ export default function CommentsModal({
 
             {/* LISTA */}
             <ScrollView
+              ref={(r) => { scrollRef.current = r; }}
               style={styles.commentsContainer}
               contentContainerStyle={{ paddingBottom: 96 + keyboardHeight + (insets?.bottom ?? 0) }}
               keyboardShouldPersistTaps="handled"
@@ -220,6 +218,8 @@ export default function CommentsModal({
               scrollEventThrottle={16}
               bounces={false}
               overScrollMode="never"
+              alwaysBounceVertical={false}
+              contentInsetAdjustmentBehavior="never"
               scrollEnabled={scrollEnabled}
               onScrollBeginDrag={(e) => {
                 const y = (e?.nativeEvent?.contentOffset?.y as number) ?? 0;
@@ -230,11 +230,15 @@ export default function CommentsModal({
               onScroll={(e) => {
                 const y = (e?.nativeEvent?.contentOffset?.y as number) ?? 0;
                 const dy = y - lastScrollYRef.current;
+
+                if (y < 0) {
+                  try { scrollRef.current?.scrollTo({ y: 0, animated: false }); } catch {}
+                }
+
                 // Acumular sólo cuando estamos en el tope y el usuario tira hacia abajo
                 if (y <= 0 && dy < 0) {
                   pullDownAccumRef.current += -dy;
-                  // bloquear scroll visual y cerrar
-                  if (pullDownAccumRef.current >= 10) {
+                  if (pullDownAccumRef.current >= 8) {
                     console.log('comments pull-to-close immediate', { accum: pullDownAccumRef.current, y, dy });
                     pullDownAccumRef.current = 0;
                     setScrollEnabled(false);
