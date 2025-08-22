@@ -42,6 +42,7 @@ export default function CommentsModal({
   const EXIT_DURATION = 240;
 
   const [localVisible, setLocalVisible] = useState<boolean>(visible);
+  const isAndroid = Platform.OS === 'android';
 
   // --- Reanimated shared values
   const openProgress = useSharedValue(0); // 0: oculto, 1: visible
@@ -228,7 +229,7 @@ useEffect(() => {
             <ScrollView
               ref={(r) => { scrollRef.current = r; }}
               style={styles.commentsContainer}
-              contentContainerStyle={{ paddingBottom: 96 + keyboardHeight + (insets?.bottom ?? 0) }}
+              contentContainerStyle={{ paddingBottom: 96 + (isAndroid ? 0 : keyboardHeight) + (insets?.bottom ?? 0) }}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
               scrollEventThrottle={16}
@@ -287,7 +288,7 @@ useEffect(() => {
               style={{
                 position: 'absolute',
                 left: 0, right: 0, bottom: 0,
-                height: keyboardHeight + (isKeyboardVisible ? 0 : (insets?.bottom ?? 0)),
+                height: (isAndroid ? 0 : keyboardHeight) + (isKeyboardVisible ? 0 : (insets?.bottom ?? 0)),
                 backgroundColor: '#1a1a1a',
               }}
               pointerEvents="none"
@@ -297,7 +298,12 @@ useEffect(() => {
             <View
               style={[
                 styles.bottomBarContainer,
-                { bottom: keyboardHeight, paddingBottom: (isKeyboardVisible ? 12 : 12 + (insets?.bottom ?? 0)) },
+                {
+                  bottom: isAndroid ? 0 : keyboardHeight,
+                  paddingBottom: isAndroid
+                    ? 12 + (isKeyboardVisible ? 0 : (insets?.bottom ?? 0))
+                    : (isKeyboardVisible ? 12 : 12 + (insets?.bottom ?? 0)),
+                },
               ]}
             >
               <View style={styles.inputContainer}>
