@@ -38,7 +38,7 @@ export default function CommentsModal({
   const scrollRef = useRef<ScrollView | null>(null);
 
   const ENTER_DURATION = 280;
-  const EXIT_DURATION = 140;
+  const EXIT_DURATION = 240;
 
   const [localVisible, setLocalVisible] = useState<boolean>(visible);
 
