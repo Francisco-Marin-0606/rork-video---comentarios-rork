@@ -163,18 +163,18 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: (_: GestureResponderEvent, g: PanResponderGestureState) => {
-        const start = g.dy > 0 && Math.abs(g.dx) < 24;
+      onStartShouldSetPanResponder: (_e: GestureResponderEvent, g: PanResponderGestureState) => {
+        const start = !isKeyboardVisible && g.dy > 1 && Math.abs(g.dx) < 12;
         if (start) console.log('CommentsModal header swipe start');
         return start;
       },
-      onMoveShouldSetPanResponderCapture: (_: GestureResponderEvent, g: PanResponderGestureState) => {
-        const start = g.dy > 0 && Math.abs(g.dx) < 24;
-        if (start) console.log('CommentsModal header swipe start (capture)');
+      onMoveShouldSetPanResponder: (_e: GestureResponderEvent, g: PanResponderGestureState) => {
+        const start = !isKeyboardVisible && g.dy > 1 && Math.abs(g.dx) < 12;
         return start;
       },
-      onMoveShouldSetPanResponder: (_: GestureResponderEvent, g: PanResponderGestureState) => {
-        const start = g.dy > 0 && Math.abs(g.dx) < 24;
+      onMoveShouldSetPanResponderCapture: (_e: GestureResponderEvent, g: PanResponderGestureState) => {
+        const start = !isKeyboardVisible && g.dy > 1 && Math.abs(g.dx) < 12;
+        if (start) console.log('CommentsModal header swipe start (capture)');
         return start;
       },
       onPanResponderGrant: () => {
@@ -183,14 +183,16 @@ export default function CommentsModal({ visible, onClose, onCountChange, onKeybo
       onPanResponderMove: () => {
         // no visual drag, we only detect a quick short swipe
       },
-      onPanResponderRelease: (_: GestureResponderEvent, g: PanResponderGestureState) => {
+      onPanResponderRelease: (_e: GestureResponderEvent, g: PanResponderGestureState) => {
         const durationMs = Date.now() - (gestureStartTSRef.current || Date.now());
-        const fastShort = g.vy > 0.9 && g.dy > 6 && durationMs < 220;
-        const longPull = g.dy > 36; // fallback if user drags a bit more
+        const fastShort = g.dy >= 2 && g.vy >= 1.2 && durationMs <= 220;
+        const longPull = g.dy >= 60;
         const shouldClose = fastShort || longPull;
         console.log('CommentsModal header swipe release', { dy: g.dy, vy: g.vy, durationMs, shouldClose });
         if (shouldClose) {
           handleAnimatedClose();
+        } else {
+          console.log('CommentsModal swipe ignored (not fast/short enough)');
         }
       },
       onPanResponderTerminate: () => {
