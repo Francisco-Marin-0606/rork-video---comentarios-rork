@@ -28,6 +28,7 @@ const VIDEO_SOURCE = {
 export default function VideoScreen() {
   const router = useRouter();
   const [showCommentsModal, setShowCommentsModal] = useState<boolean>(false);
+  const [topAreaHeight, setTopAreaHeight] = useState<number>(screenHeight);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const videoRef = useRef<Video | null>(null);
   const [playbackStatus, setPlaybackStatus] = useState<AVPlaybackStatus | null>(null);
@@ -235,7 +236,11 @@ export default function VideoScreen() {
           ref={(r) => { videoRef.current = r; }}
           style={[
             styles.video,
-            { height: showCommentsModal ? Math.round(screenHeight * 0.8) : screenHeight },
+            {
+              height: showCommentsModal
+                ? Math.max(0, Math.min(Math.round(screenHeight * 0.8), topAreaHeight))
+                : screenHeight,
+            },
           ]}
           source={VIDEO_SOURCE}
           resizeMode={showCommentsModal ? ResizeMode.CONTAIN : ResizeMode.COVER}
@@ -309,6 +314,9 @@ export default function VideoScreen() {
 
       <CommentsModal
         visible={showCommentsModal}
+        onTopAreaHeightChange={(h: number) => {
+          setTopAreaHeight(Math.max(0, Math.floor(h)));
+        }}
         onClose={async () => {
           try {
             setShowCommentsModal(false);

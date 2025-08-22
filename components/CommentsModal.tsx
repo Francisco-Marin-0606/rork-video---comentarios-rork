@@ -18,12 +18,13 @@ interface CommentsModalProps {
   onClose: () => void;
   onCountChange?: (count: number) => void;
   onKeyboardChange?: (visible: boolean) => void;
+  onTopAreaHeightChange?: (height: number) => void;
 }
 
 const { height: screenHeight } = Dimensions.get('window');
 
 export default function CommentsModal({
-  visible, onClose, onCountChange, onKeyboardChange,
+  visible, onClose, onCountChange, onKeyboardChange, onTopAreaHeightChange,
 }: CommentsModalProps) {
   const insets = useSafeAreaInsets();
   const [comments, setComments] = useState<Comment[]>(mockComments);
@@ -47,6 +48,19 @@ export default function CommentsModal({
 
   const sheetHeight = Math.round(screenHeight * (isKeyboardVisible ? 0.9 : 0.75));
   const offscreenTranslate = sheetHeight + (insets?.bottom ?? 0);
+
+// reportar altura del área superior para encajar el video
+useEffect(() => {
+  try {
+    if (!onTopAreaHeightChange) return;
+    if (!visible) return;
+    const topArea = Math.max(0, screenHeight - sheetHeight);
+    onTopAreaHeightChange(topArea);
+  } catch (e) {
+    console.log('onTopAreaHeightChange error', e);
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [visible, isKeyboardVisible, sheetHeight, insets?.bottom]);
 
   // abrir/cerrar por prop
   useEffect(() => {
