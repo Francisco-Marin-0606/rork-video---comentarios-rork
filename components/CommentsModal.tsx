@@ -19,12 +19,13 @@ interface CommentsModalProps {
   onCountChange?: (count: number) => void;
   onKeyboardChange?: (visible: boolean) => void;
   onTopAreaHeightChange?: (height: number) => void;
+  onWillClose?: () => void;
 }
 
 const { height: screenHeight } = Dimensions.get('window');
 
 export default function CommentsModal({
-  visible, onClose, onCountChange, onKeyboardChange, onTopAreaHeightChange,
+  visible, onClose, onCountChange, onKeyboardChange, onTopAreaHeightChange, onWillClose,
 }: CommentsModalProps) {
   const insets = useSafeAreaInsets();
   const [comments, setComments] = useState<Comment[]>(mockComments);
@@ -124,6 +125,7 @@ useEffect(() => {
   };
 
   const handleAnimatedClose = () => {
+    try { onWillClose?.(); } catch {}
     Keyboard.dismiss();
     dragY.value = 0;
     openProgress.value = withTiming(0, { duration: EXIT_DURATION }, (finished) => {

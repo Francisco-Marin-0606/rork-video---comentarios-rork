@@ -44,6 +44,9 @@ export default function VideoScreen() {
   const spinnerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevIsPlaying = useRef<boolean>(false);
 
+  // progress: 0 = fullscreen, 1 = shrunk under comments
+  const videoProgress = useRef<Animated.Value>(new Animated.Value(0)).current;
+
   const showPlayPauseIcon = useCallback(() => {
     try {
       if (fadeTimeoutRef.current) {
@@ -185,6 +188,11 @@ export default function VideoScreen() {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     setShowCommentsModal(true);
+    try {
+      Animated.timing(videoProgress, { toValue: 1, duration: 280, useNativeDriver: false }).start();
+    } catch (e) {
+      console.log('video open animate error', e);
+    }
   };
 
   const remainingLabel = React.useMemo(() => {
@@ -219,6 +227,21 @@ export default function VideoScreen() {
     }
   }, [isLoading, isBuffering]);
 
+  // compute target height for shrunk state
+  const targetHeight = useMemo(() => {
+    try {
+      return Math.max(0, Math.min(Math.round(screenHeight * 0.8), topAreaHeight));
+    } catch {
+      return Math.round(screenHeight * 0.8);
+    }
+  }, [topAreaHeight]);
+
+  const videoHeight = videoProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [screenHeight, targetHeight],
+    extrapolate: 'clamp',
+  });
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -232,27 +255,22 @@ export default function VideoScreen() {
         activeOpacity={1}
         onPress={handlePlayPause}
       >
-        <Video
-          ref={(r) => { videoRef.current = r; }}
-          style={[
-            styles.video,
-            {
-              height: showCommentsModal
-                ? Math.max(0, Math.min(Math.round(screenHeight * 0.8), topAreaHeight))
-                : screenHeight,
-            },
-          ]}
-          source={VIDEO_SOURCE}
-          resizeMode={showCommentsModal ? ResizeMode.CONTAIN : ResizeMode.COVER}
-          shouldPlay
-          isMuted={Platform.OS === 'web'}
-          isLooping={false}
-          useNativeControls={false}
-          progressUpdateIntervalMillis={250}
-          onLoadStart={() => { setIsLoading(true); console.log('Video load start'); }}
-          onLoad={() => { setIsLoading(false); hasNavigatedRef.current = false; console.log('Video loaded'); }}
-          onPlaybackStatusUpdate={onStatusUpdate}
-        />
+        <Animated.View style={[styles.videoAnimatedContainer, { height: videoHeight }]}> 
+          <Video
+            ref={(r) => { videoRef.current = r; }}
+            style={styles.video}
+            source={VIDEO_SOURCE}
+            resizeMode={showCommentsModal ? ResizeMode.CONTAIN : ResizeMode.COVER}
+            shouldPlay
+            isMuted={Platform.OS === 'web'}
+            isLooping={false}
+            useNativeControls={false}
+            progressUpdateIntervalMillis={250}
+            onLoadStart={() => { setIsLoading(true); console.log('Video load start'); }}
+            onLoad={() => { setIsLoading(false); hasNavigatedRef.current = false; console.log('Video loaded'); }}
+            onPlaybackStatusUpdate={onStatusUpdate}
+          />
+        </Animated.View>
 
         <View style={styles.centerOverlay} pointerEvents="none">
           {spinnerVisible && (
@@ -317,6 +335,13 @@ export default function VideoScreen() {
         onTopAreaHeightChange={(h: number) => {
           setTopAreaHeight(Math.max(0, Math.floor(h)));
         }}
+        onWillClose={() => {
+          try {
+            Animated.timing(videoProgress, { toValue: 0, duration: 240, useNativeDriver: false }).start();
+          } catch (e) {
+            console.log('video close animate error', e);
+          }
+        }}
         onClose={async () => {
           try {
             setShowCommentsModal(false);
@@ -368,12 +393,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  video: {
+  videoAnimatedContainer: {
     width: '100%',
     backgroundColor: '#000',
     position: 'absolute',
     top: 0,
     left: 0,
+    right: 0,
+    overflow: 'hidden',
+  },
+  video: {
+    ...StyleSheet.absoluteFillObject as any,
+    backgroundColor: '#000',
   },
   centerOverlay: {
     position: 'absolute',
